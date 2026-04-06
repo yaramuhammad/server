@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use App\Models\Question;
 use App\Models\Test;
 use App\Models\User;
@@ -15,20 +14,15 @@ class TestSeeder extends Seeder
         $sarah = User::where('email', 'sarah@edrak.com')->first();
         $omar = User::where('email', 'omar@edrak.com')->first();
 
-        $burnoutCategory = Category::whereRaw("title->>'en' = ?", ['Occupational Burnout'])->first();
-        $stressCategory = Category::whereRaw("title->>'en' = ?", ['Psychological Stress'])->first();
-        $satisfactionCategory = Category::whereRaw("title->>'en' = ?", ['Job Satisfaction'])->first();
-
-        $this->createBurnoutInventory($sarah, $burnoutCategory);
-        $this->createPerceivedStressScale($omar, $stressCategory);
-        $this->createJobSatisfactionSurvey($sarah, $satisfactionCategory);
+        $this->createBurnoutInventory($sarah);
+        $this->createPerceivedStressScale($omar);
+        $this->createJobSatisfactionSurvey($sarah);
     }
 
-    private function createBurnoutInventory(User $user, Category $category): void
+    private function createBurnoutInventory(User $user): void
     {
         $test = Test::create([
             'user_id' => $user->id,
-            'category_id' => $category->id,
             'title' => [
                 'en' => 'Maslach Burnout Inventory',
                 'ar' => 'مقياس ماسلاش للإحتراق الوظيفي',
@@ -119,11 +113,10 @@ class TestSeeder extends Seeder
         }
     }
 
-    private function createPerceivedStressScale(User $user, Category $category): void
+    private function createPerceivedStressScale(User $user): void
     {
         $test = Test::create([
             'user_id' => $user->id,
-            'category_id' => $category->id,
             'title' => [
                 'en' => 'Perceived Stress Scale (PSS-10)',
                 'ar' => 'مقياس الضغط النفسي المُدرك (PSS-10)',
@@ -173,11 +166,10 @@ class TestSeeder extends Seeder
         }
     }
 
-    private function createJobSatisfactionSurvey(User $user, Category $category): void
+    private function createJobSatisfactionSurvey(User $user): void
     {
         $test = Test::create([
             'user_id' => $user->id,
-            'category_id' => $category->id,
             'title' => [
                 'en' => 'Job Satisfaction Survey',
                 'ar' => 'استبيان الرضا الوظيفي',
