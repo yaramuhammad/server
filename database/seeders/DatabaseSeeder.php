@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             GreatEightCompetenciesSeeder::class,
             RavenAPMTestSeeder::class,
             CreativeLeadershipTestSeeder::class,
-            AssessmentSeeder::class,
             DemoAssessmentSeeder::class,
             ParticipantAndResponseSeeder::class,
         ]);
