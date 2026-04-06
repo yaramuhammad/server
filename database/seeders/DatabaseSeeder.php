@@ -10,8 +10,20 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            TestSeeder::class,
+            BigFivePersonalitySeeder::class,
+            PsychologicalHardinessSeeder::class,
+            CopingStyleSeeder::class,
+            AchievementMotivationSeeder::class,
+            MultifactorLeadershipSeeder::class,
+            EmotionalIntelligenceSeeder::class,
+            MultipleIntelligencesSeeder::class,
+            CreativityTestSeeder::class,
+            ProfessionalCompetenciesSeeder::class,
+            GreatEightCompetenciesSeeder::class,
+            RavenAPMTestSeeder::class,
+            CreativeLeadershipTestSeeder::class,
             AssessmentSeeder::class,
+            DemoAssessmentSeeder::class,
             ParticipantAndResponseSeeder::class,
         ]);
     }
