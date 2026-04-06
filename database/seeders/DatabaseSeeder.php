@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
             RavenAPMTestSeeder::class,
             CreativeLeadershipTestSeeder::class,
             DemoAssessmentSeeder::class,
-            ParticipantAndResponseSeeder::class,
         ]);
     }
 }
