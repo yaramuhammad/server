@@ -28,7 +28,7 @@ class ContactController extends Controller
             ], 500);
         }
 
-        Mail::to($adminEmail)->send(new ContactMessageMail(
+        Mail::to($adminEmail)->queue(new ContactMessageMail(
             senderName: $data['name'],
             senderEmail: $data['email'],
             senderPhone: $data['phone'] ?? null,
