@@ -14,11 +14,15 @@ use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\ProfileController;
 use App\Http\Controllers\Api\Admin\ParticipantManagementController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\Participant\ParticipationController;
 use App\Http\Controllers\Api\Participant\ParticipantPortalController;
 
 // Health check (no auth, no throttle — for load balancers)
 Route::get('health', [HealthController::class, 'check']);
+
+// Public contact form
+Route::middleware('throttle:6,1')->post('contact', [ContactController::class, 'send']);
 
 // Auth
 Route::middleware('throttle:auth')->group(function () {
