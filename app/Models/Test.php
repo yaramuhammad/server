@@ -24,6 +24,7 @@ class Test extends Model
         'scale_config',
         'scoring_type',
         'scoring_config',
+        'chart_type',
         'time_limit_minutes',
         'randomize_questions',
     ];
@@ -37,6 +38,7 @@ class Test extends Model
             'scale_config' => 'array',
             'scoring_type' => 'string',
             'scoring_config' => 'array',
+            'chart_type' => 'string',
             'time_limit_minutes' => 'integer',
             'randomize_questions' => 'boolean',
         ];

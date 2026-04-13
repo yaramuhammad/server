@@ -53,6 +53,7 @@ class MultifactorLeadershipSeeder extends Seeder
                 ['key' => 'outcomes', 'label' => ['en' => 'Outcomes of Leadership', 'ar' => 'نتائج القيادة'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'column',
         ]);
 
         // Category map by question number (from the scoring key image)

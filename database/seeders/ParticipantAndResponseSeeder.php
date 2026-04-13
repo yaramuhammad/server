@@ -28,16 +28,16 @@ class ParticipantAndResponseSeeder extends Seeder
         $tests = $assessment->tests()->orderByPivot('sort_order')->get();
 
         $participants = [
-            ['name' => 'Ahmed Al-Rashid', 'email' => 'ahmed.r@company.com', 'department' => 'Engineering', 'age' => 32, 'gender' => 'male', 'burnout' => 'high', 'stress' => 'high'],
-            ['name' => 'Fatima Hassan', 'email' => 'fatima.h@company.com', 'department' => 'Engineering', 'age' => 28, 'gender' => 'female', 'burnout' => 'high', 'stress' => 'medium'],
-            ['name' => 'Mohammed Khalil', 'email' => 'mohammed.k@company.com', 'department' => 'Marketing', 'age' => 35, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'medium'],
-            ['name' => 'Layla Ibrahim', 'email' => 'layla.i@company.com', 'department' => 'HR', 'age' => 41, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
-            ['name' => 'Yusuf Nasser', 'email' => 'yusuf.n@company.com', 'department' => 'Finance', 'age' => 29, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'high'],
-            ['name' => 'Noor Al-Sayed', 'email' => 'noor.s@company.com', 'department' => 'Operations', 'age' => 37, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
-            ['name' => 'Khalid Omar', 'email' => 'khalid.o@company.com', 'department' => 'Engineering', 'age' => 44, 'gender' => 'male', 'burnout' => 'high', 'stress' => 'medium'],
-            ['name' => 'Sara Mahmoud', 'email' => 'sara.m@company.com', 'department' => 'Marketing', 'age' => 26, 'gender' => 'female', 'burnout' => 'medium', 'stress' => 'low'],
-            ['name' => 'Tariq Zayed', 'email' => 'tariq.z@company.com', 'department' => 'Finance', 'age' => 33, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'medium'],
-            ['name' => 'Hana Al-Farsi', 'email' => 'hana.f@company.com', 'department' => 'HR', 'age' => 30, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
+            ['name' => 'Ahmed Al-Rashid', 'email' => 'ahmed.r@company.com', 'company' => 'Edrak Tech', 'job_title' => 'Software Engineer', 'age' => 32, 'gender' => 'male', 'burnout' => 'high', 'stress' => 'high'],
+            ['name' => 'Fatima Hassan', 'email' => 'fatima.h@company.com', 'company' => 'Edrak Tech', 'job_title' => 'Software Engineer', 'age' => 28, 'gender' => 'female', 'burnout' => 'high', 'stress' => 'medium'],
+            ['name' => 'Mohammed Khalil', 'email' => 'mohammed.k@company.com', 'company' => 'Edrak Media', 'job_title' => 'Marketing Manager', 'age' => 35, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'medium'],
+            ['name' => 'Layla Ibrahim', 'email' => 'layla.i@company.com', 'company' => 'Edrak Group', 'job_title' => 'HR Specialist', 'age' => 41, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
+            ['name' => 'Yusuf Nasser', 'email' => 'yusuf.n@company.com', 'company' => 'Edrak Finance', 'job_title' => 'Financial Analyst', 'age' => 29, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'high'],
+            ['name' => 'Noor Al-Sayed', 'email' => 'noor.s@company.com', 'company' => 'Edrak Logistics', 'job_title' => 'Operations Lead', 'age' => 37, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
+            ['name' => 'Khalid Omar', 'email' => 'khalid.o@company.com', 'company' => 'Edrak Tech', 'job_title' => 'Software Engineer', 'age' => 44, 'gender' => 'male', 'burnout' => 'high', 'stress' => 'medium'],
+            ['name' => 'Sara Mahmoud', 'email' => 'sara.m@company.com', 'company' => 'Edrak Media', 'job_title' => 'Marketing Manager', 'age' => 26, 'gender' => 'female', 'burnout' => 'medium', 'stress' => 'low'],
+            ['name' => 'Tariq Zayed', 'email' => 'tariq.z@company.com', 'company' => 'Edrak Finance', 'job_title' => 'Financial Analyst', 'age' => 33, 'gender' => 'male', 'burnout' => 'medium', 'stress' => 'medium'],
+            ['name' => 'Hana Al-Farsi', 'email' => 'hana.f@company.com', 'company' => 'Edrak Group', 'job_title' => 'HR Specialist', 'age' => 30, 'gender' => 'female', 'burnout' => 'low', 'stress' => 'low'],
         ];
 
         foreach ($participants as $i => $pData) {
@@ -45,7 +45,8 @@ class ParticipantAndResponseSeeder extends Seeder
                 'assessment_link_id' => $link->id,
                 'name' => $pData['name'],
                 'email' => $pData['email'],
-                'department' => $pData['department'],
+                'company' => $pData['company'],
+                'job_title' => $pData['job_title'],
                 'age' => $pData['age'],
                 'gender' => $pData['gender'],
                 'ip_address' => '192.168.1.' . ($i + 10),

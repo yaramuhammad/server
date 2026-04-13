@@ -3,6 +3,9 @@
 @php
     $categories = $categories ?? [];
     $locale = $locale ?? 'en';
+    $isAr = $locale === 'ar';
+    $arSvc = app(\App\Services\ArabicTextService::class);
+    $shapeText = fn(?string $text) => $arSvc->shape($text ?? '');
     $count = count($categories);
     if ($count < 3) return;
 
@@ -58,6 +61,7 @@
         if (is_array($label)) {
             $label = $label[$locale] ?? $label['en'] ?? '';
         }
+        $label = $shapeText($label);
 
         $labelPoints[] = [
             'x' => round($labelX, 1),
@@ -113,14 +117,15 @@
             @php
                 $anchor = 'middle';
                 $angleDeg = rad2deg($lp['angle']);
-                if ($angleDeg > -80 && $angleDeg < 80) $anchor = 'start';
-                elseif ($angleDeg > 100 || $angleDeg < -100) $anchor = 'end';
+                if ($angleDeg > -80 && $angleDeg < 80) $anchor = $isAr ? 'end' : 'start';
+                elseif ($angleDeg > 100 || $angleDeg < -100) $anchor = $isAr ? 'start' : 'end';
             @endphp
             <text
                 x="{{ $lp['x'] }}" y="{{ $lp['y'] }}"
                 text-anchor="{{ $anchor }}"
                 dominant-baseline="middle"
                 font-size="9" fill="#6b7280"
+                font-family="DejaVu Sans, sans-serif"
             >{{ $lp['label'] }} ({{ $lp['pct'] }}%)</text>
         @endforeach
     </svg>

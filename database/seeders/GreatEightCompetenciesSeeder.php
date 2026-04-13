@@ -57,6 +57,7 @@ class GreatEightCompetenciesSeeder extends Seeder
                 ['key' => 'enterprising', 'label' => ['en' => 'Enterprising & Performing', 'ar' => 'المبادرة والإنجاز'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'line',
         ]);
 
         $reverseItems = [5, 6, 12, 14, 20, 22, 24, 28, 30, 36, 38, 44, 46, 52, 54, 60, 62];

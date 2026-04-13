@@ -57,6 +57,7 @@ class ProfessionalCompetenciesSeeder extends Seeder
                 ['key' => 'enterprising', 'label' => ['en' => 'Enterprising and Performing', 'ar' => 'المبادرة والإنجاز'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'bar',
         ]);
 
         $questions = [

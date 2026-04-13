@@ -98,7 +98,7 @@ class CsvExportService
     {
         $header = [
             'participant_name', 'participant_email', 'participant_phone',
-            'participant_department', 'participant_age', 'participant_gender',
+            'participant_company', 'participant_job_title', 'participant_age', 'participant_gender',
             'participant_locale', 'completed_at',
         ];
 
@@ -118,7 +118,8 @@ class CsvExportService
                 $participant->name,
                 $participant->email,
                 $participant->phone,
-                $participant->department,
+                $participant->company,
+                $participant->job_title,
                 $participant->age,
                 $participant->gender,
                 $participant->locale,
@@ -157,7 +158,8 @@ class CsvExportService
                     fputcsv($handle, [
                         $participant->name,
                         $participant->email,
-                        $participant->department,
+                        $participant->company,
+                $participant->job_title,
                         $participant->age,
                         $participant->gender,
                         $testName,

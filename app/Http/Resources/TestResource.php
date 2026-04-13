@@ -18,6 +18,7 @@ class TestResource extends JsonResource
             'scale_config' => $this->scale_config,
             'scoring_type' => $this->scoring_type,
             'scoring_config' => $this->scoring_config,
+            'chart_type' => $this->chart_type ?? 'bar',
             'time_limit_minutes' => $this->time_limit_minutes,
             'randomize_questions' => $this->randomize_questions,
             'questions' => QuestionResource::collection($this->whenLoaded('questions')),

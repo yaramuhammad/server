@@ -111,7 +111,8 @@ class PdfExportService
             'accountName' => $account->name,
             'accountEmail' => $account->email,
             'accountPhone' => $account->phone,
-            'accountDepartment' => $account->department,
+            'accountCompany' => $account->company,
+            'accountJobTitle' => $account->job_title,
             'accountAge' => $account->age,
             'accountGender' => $account->gender,
             'assessments' => $assessments,
@@ -120,6 +121,43 @@ class PdfExportService
         ]);
 
         $name = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $account->name ?? 'participant');
+        return $pdf->download("psycho_profile_{$name}_" . now()->format('Y-m-d_His') . '.pdf');
+    }
+
+    /**
+     * Generate a psycho-profile PDF for a single Participant record (per-link participant).
+     */
+    public function participantReport(Participant $participant)
+    {
+        $participant->load([
+            'assessmentLink.assessment',
+            'attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question']),
+        ]);
+
+        $link = $participant->assessmentLink;
+        $assessments = collect();
+
+        if ($link && $link->assessment) {
+            $assessments->push([
+                'assessment_title' => $link->assessment->getTranslation('title'),
+                'attempts' => $participant->attempts,
+            ]);
+        }
+
+        $pdf = Pdf::loadView('reports.participant-combined', [
+            'accountName' => $participant->name ?? 'Unknown',
+            'accountEmail' => $participant->email,
+            'accountPhone' => $participant->phone,
+            'accountCompany' => $participant->company,
+            'accountJobTitle' => $participant->job_title,
+            'accountAge' => $participant->age,
+            'accountGender' => $participant->gender,
+            'assessments' => $assessments,
+            'includeResponses' => true,
+            'dir' => $this->getDir(),
+        ]);
+
+        $name = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $participant->name ?? 'participant');
         return $pdf->download("psycho_profile_{$name}_" . now()->format('Y-m-d_His') . '.pdf');
     }
 
@@ -146,7 +184,8 @@ class PdfExportService
             'accountName' => $first?->name ?? 'Unknown',
             'accountEmail' => $email,
             'accountPhone' => $first?->phone,
-            'accountDepartment' => $first?->department,
+            'accountCompany' => $first?->company,
+            'accountJobTitle' => $first?->job_title,
             'accountAge' => $first?->age,
             'accountGender' => $first?->gender,
             'assessments' => $assessments,
@@ -188,8 +227,7 @@ class PdfExportService
 
     private function getDir(): string
     {
-        $locale = request()->header('Accept-Language', 'en');
-        return $locale === 'ar' ? 'rtl' : 'ltr';
+        return app()->getLocale() === 'ar' ? 'rtl' : 'ltr';
     }
 
     private function buildFilename(string $type, Assessment $assessment, ?AssessmentLink $link = null): string

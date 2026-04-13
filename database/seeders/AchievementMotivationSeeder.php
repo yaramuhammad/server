@@ -54,6 +54,7 @@ class AchievementMotivationSeeder extends Seeder
                 ['key' => 'planning', 'label' => ['en' => 'Future Planning', 'ar' => 'التخطيط للمستقبل'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'doughnut',
         ]);
 
         // Reverse-scored items (by question number 1-based): 7,10,11,12,16,18,19,33,35,36,41,42

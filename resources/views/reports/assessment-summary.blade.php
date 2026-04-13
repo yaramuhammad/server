@@ -31,7 +31,8 @@
             <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Department</th>
+                <th>Company</th>
+                <th>Job Title</th>
                 @foreach($tests as $test)
                     <th>{{ $test->getTranslation('title') }} (%)</th>
                 @endforeach
@@ -42,7 +43,8 @@
                 <tr>
                     <td>{{ $participant->name ?? '—' }}</td>
                     <td>{{ $participant->email ?? '—' }}</td>
-                    <td>{{ $participant->department ?? '—' }}</td>
+                    <td>{{ $participant->company ?? '—' }}</td>
+                    <td>{{ $participant->job_title ?? '—' }}</td>
                     @php $attemptsByTest = $participant->attempts->keyBy('test_id'); @endphp
                     @foreach($tests as $test)
                         @php $attempt = $attemptsByTest->get($test->id); @endphp

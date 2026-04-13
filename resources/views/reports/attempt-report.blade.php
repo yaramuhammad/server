@@ -15,7 +15,8 @@
         <tbody>
             <tr><th>Name</th><td>{{ $participant->name ?? '—' }}</td></tr>
             <tr><th>Email</th><td>{{ $participant->email ?? '—' }}</td></tr>
-            <tr><th>Department</th><td>{{ $participant->department ?? '—' }}</td></tr>
+            <tr><th>Company</th><td>{{ $participant->company ?? '—' }}</td></tr>
+            <tr><th>Job Title</th><td>{{ $participant->job_title ?? '—' }}</td></tr>
             <tr><th>Age</th><td>{{ $participant->age ?? '—' }}</td></tr>
             <tr><th>Gender</th><td>{{ $participant->gender ?? '—' }}</td></tr>
         </tbody>

@@ -33,7 +33,8 @@
             <tr><th style="width: 150px;">{{ $s($isAr ? 'الاسم' : 'Name') }}</th><td>{{ $s($accountName) }}</td></tr>
             <tr><th>{{ $s($isAr ? 'البريد الإلكتروني' : 'Email') }}</th><td>{{ $accountEmail }}</td></tr>
             @if($accountPhone)<tr><th>{{ $s($isAr ? 'الهاتف' : 'Phone') }}</th><td>{{ $accountPhone }}</td></tr>@endif
-            @if($accountDepartment)<tr><th>{{ $s($isAr ? 'القسم' : 'Department') }}</th><td>{{ $s($accountDepartment) }}</td></tr>@endif
+            @if($accountCompany)<tr><th>{{ $s($isAr ? 'الشركة' : 'Company') }}</th><td>{{ $s($accountCompany) }}</td></tr>@endif
+            @if($accountJobTitle)<tr><th>{{ $s($isAr ? 'المسمى الوظيفي' : 'Job Title') }}</th><td>{{ $s($accountJobTitle) }}</td></tr>@endif
             @if($accountAge)<tr><th>{{ $s($isAr ? 'العمر' : 'Age') }}</th><td>{{ $accountAge }}</td></tr>@endif
             @if($accountGender)<tr><th>{{ $s($isAr ? 'الجنس' : 'Gender') }}</th><td>{{ $s(ucfirst($accountGender)) }}</td></tr>@endif
         </tbody>
@@ -53,6 +54,7 @@
         {{-- Score overview line chart (when 2+ tests completed) --}}
         @if(count($entry['attempts']) >= 2)
             @include('reports.partials.score-line-chart', ['attempts' => collect($entry['attempts']), 'locale' => $lang])
+            <div class="page-break"></div>
         @endif
 
         @foreach($entry['attempts'] as $attemptIdx => $attempt)
@@ -86,31 +88,66 @@
 
             {{-- Category Scoring --}}
             @if($scoringType === 'category' && !empty($details['categories']))
+                @php
+                    $chartType = $attempt->test->chart_type ?? 'bar';
+                @endphp
+
                 <p style="font-weight: bold; font-size: 11px; margin: 10px 0 6px; color: #1e40af;">
                     {{ $s($isAr ? 'تفصيل الأبعاد' : 'Category Breakdown') }}
                 </p>
 
-                @foreach($details['categories'] as $cat)
-                    @php
-                        $catLabel = is_array($cat['label'] ?? null) ? ($cat['label'][$lang] ?? $cat['key']) : ($cat['label'] ?? $cat['key']);
-                        $interpLabel = '';
-                        if (!empty($cat['interpretation'])) {
-                            $interpLabel = is_array($cat['interpretation']) ? ($cat['interpretation'][$lang] ?? '') : $cat['interpretation'];
-                        }
-                    @endphp
-                    <div class="category-bar-container">
-                        <div class="category-bar-label">{{ $s($catLabel) }}</div>
-                        <div class="category-bar-track">
-                            <div class="category-bar-fill" style="width: {{ min(100, max(0, $cat['score_percentage'])) }}%;"></div>
+                @if($chartType === 'pie')
+                    @include('reports.partials.pie-chart', ['categories' => $details['categories'], 'locale' => $lang])
+                @elseif($chartType === 'column')
+                    @include('reports.partials.column-chart', ['categories' => $details['categories'], 'locale' => $lang])
+                @elseif($chartType === 'line')
+                    @include('reports.partials.line-chart', ['categories' => $details['categories'], 'locale' => $lang])
+                @elseif($chartType === 'doughnut')
+                    @include('reports.partials.doughnut-chart', ['categories' => $details['categories'], 'locale' => $lang])
+                @else
+                    {{-- Default: bar chart (CSS progress bars) --}}
+                    @foreach($details['categories'] as $cat)
+                        @php
+                            $catLabel = is_array($cat['label'] ?? null) ? ($cat['label'][$lang] ?? $cat['key']) : ($cat['label'] ?? $cat['key']);
+                            $interpLabel = '';
+                            if (!empty($cat['interpretation'])) {
+                                $interpLabel = is_array($cat['interpretation']) ? ($cat['interpretation'][$lang] ?? '') : $cat['interpretation'];
+                            }
+                        @endphp
+                        <div class="category-bar-container">
+                            <div class="category-bar-label">{{ $s($catLabel) }}</div>
+                            <div class="category-bar-track">
+                                <div class="category-bar-fill" style="width: {{ min(100, max(0, $cat['score_percentage'])) }}%;"></div>
+                            </div>
+                            <div class="category-bar-value">
+                                {{ $cat['score_percentage'] }}% ({{ $cat['score_raw'] }}/{{ $cat['score_max'] }})
+                                @if($interpLabel)
+                                    — <strong>{{ $s($interpLabel) }}</strong>
+                                @endif
+                            </div>
                         </div>
-                        <div class="category-bar-value">
+                    @endforeach
+                @endif
+
+                {{-- Text detail list for all chart types --}}
+                @if($chartType !== 'bar')
+                    @foreach($details['categories'] as $cat)
+                        @php
+                            $catLabel = is_array($cat['label'] ?? null) ? ($cat['label'][$lang] ?? $cat['key']) : ($cat['label'] ?? $cat['key']);
+                            $interpLabel = '';
+                            if (!empty($cat['interpretation'])) {
+                                $interpLabel = is_array($cat['interpretation']) ? ($cat['interpretation'][$lang] ?? '') : $cat['interpretation'];
+                            }
+                        @endphp
+                        <div class="category-bar-value" style="margin: 2px 0;">
+                            <strong>{{ $s($catLabel) }}</strong>:
                             {{ $cat['score_percentage'] }}% ({{ $cat['score_raw'] }}/{{ $cat['score_max'] }})
                             @if($interpLabel)
-                                — <strong>{{ $s($interpLabel) }}</strong>
+                                — {{ $s($interpLabel) }}
                             @endif
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                @endif
 
             @endif
 

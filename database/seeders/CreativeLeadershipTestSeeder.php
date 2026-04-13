@@ -32,6 +32,7 @@ class CreativeLeadershipTestSeeder extends Seeder
             'scoring_type' => 'category',
             'scoring_config' => $this->getScoringConfig(),
             'randomize_questions' => false,
+            'chart_type' => 'line',
         ]);
 
         foreach ($this->getQuestions() as $index => $q) {

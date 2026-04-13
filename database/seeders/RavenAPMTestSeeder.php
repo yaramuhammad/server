@@ -56,6 +56,7 @@ class RavenAPMTestSeeder extends Seeder
                 ],
             ],
             'randomize_questions' => false,
+            'chart_type' => 'column',
         ]);
 
         // Answer key from PDF page 39

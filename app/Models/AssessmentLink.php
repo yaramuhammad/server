@@ -28,7 +28,8 @@ class AssessmentLink extends Model
         'collect_name',
         'collect_email',
         'collect_phone',
-        'collect_department',
+        'collect_company',
+        'collect_job_title',
         'collect_age',
         'collect_gender',
         'custom_fields',
@@ -47,7 +48,8 @@ class AssessmentLink extends Model
             'collect_name' => 'boolean',
             'collect_email' => 'boolean',
             'collect_phone' => 'boolean',
-            'collect_department' => 'boolean',
+            'collect_company' => 'boolean',
+            'collect_job_title' => 'boolean',
             'collect_age' => 'boolean',
             'collect_gender' => 'boolean',
             'custom_fields' => 'array',
@@ -134,7 +136,8 @@ class AssessmentLink extends Model
         if ($this->collect_name) $fields[] = 'name';
         if ($this->collect_email) $fields[] = 'email';
         if ($this->collect_phone) $fields[] = 'phone';
-        if ($this->collect_department) $fields[] = 'department';
+        if ($this->collect_company) $fields[] = 'company';
+        if ($this->collect_job_title) $fields[] = 'job_title';
         if ($this->collect_age) $fields[] = 'age';
         if ($this->collect_gender) $fields[] = 'gender';
 

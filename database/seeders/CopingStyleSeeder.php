@@ -52,6 +52,7 @@ class CopingStyleSeeder extends Seeder
                 ['key' => 'avoidant', 'label' => ['en' => 'Avoidant Coping', 'ar' => 'المواجهة التجنبية'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'pie',
         ]);
 
         $questions = [

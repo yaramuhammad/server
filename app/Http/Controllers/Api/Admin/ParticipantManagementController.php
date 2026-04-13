@@ -24,7 +24,8 @@ class ParticipantManagementController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('department', 'like', "%{$search}%");
+                  ->orWhere('company', 'like', "%{$search}%")
+                  ->orWhere('job_title', 'like', "%{$search}%");
             });
         }
 
@@ -68,7 +69,8 @@ class ParticipantManagementController extends Controller
                 'name' => $account->name,
                 'email' => $account->email,
                 'phone' => $account->phone,
-                'department' => $account->department,
+                'company' => $account->company,
+                'job_title' => $account->job_title,
                 'age' => $account->age,
                 'gender' => $account->gender,
                 'preferred_locale' => $account->preferred_locale,
@@ -160,7 +162,8 @@ class ParticipantManagementController extends Controller
             'name' => $participantAccount->name,
             'email' => $participantAccount->email,
             'phone' => $participantAccount->phone,
-            'department' => $participantAccount->department,
+            'company' => $participantAccount->company,
+            'job_title' => $participantAccount->job_title,
             'age' => $participantAccount->age,
             'gender' => $participantAccount->gender,
             'preferred_locale' => $participantAccount->preferred_locale,
@@ -238,7 +241,8 @@ class ParticipantManagementController extends Controller
                 'name' => $participantAccount->name,
                 'email' => $participantAccount->email,
                 'phone' => $participantAccount->phone,
-                'department' => $participantAccount->department,
+                'company' => $participantAccount->company,
+            'job_title' => $participantAccount->job_title,
                 'age' => $participantAccount->age,
                 'gender' => $participantAccount->gender,
             ],

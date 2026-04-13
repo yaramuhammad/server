@@ -1,67 +1,45 @@
-{{-- Line chart for PDF export — shows score % across all tests --}}
-{{-- Uses only basic SVG elements supported by DomPDF: rect, circle, line, text --}}
+{{-- SVG Line Chart for PDF export — shows category scores as connected line --}}
 @php
-    $attempts = $attempts ?? collect();
+    $categories = $categories ?? [];
     $locale = $locale ?? 'en';
     $isAr = $locale === 'ar';
     $arSvc = app(\App\Services\ArabicTextService::class);
     $s = fn(?string $text) => $arSvc->shape($text ?? '');
+    $count = count($categories);
+    if ($count < 1) return;
 
-    $count = $attempts->count();
-    if ($count < 2) return;
-
-    // Chart dimensions
     $totalW = 520;
-    $totalH = 400;
+    $totalH = 350;
     $padL = 35;
     $padR = 15;
-    $padT = 20;
-    $padB = 220;
+    $padT = 25;
+    $padB = 100;
     $plotW = $totalW - $padL - $padR;
     $plotH = $totalH - $padT - $padB;
 
-    // Build data — expand Big Five categories into individual points
-    $bigFiveKeys = ['extraversion', 'neuroticism', 'openness', 'agreeableness', 'conscientiousness'];
-    $dataPoints = [];
-    foreach ($attempts->values() as $attempt) {
-        $details = $attempt->score_details;
-        $cats = $details['categories'] ?? [];
-        $catKeys = array_column($cats, 'key');
-        $isBigFive = ($details['type'] ?? '') === 'category'
-            && count($cats) === 5
-            && count(array_diff($catKeys, $bigFiveKeys)) === 0;
-
-        if ($isBigFive) {
-            foreach ($cats as $cat) {
-                $catLabel = is_array($cat['label'] ?? null) ? ($cat['label'][$locale] ?? $cat['key']) : ($cat['label'] ?? $cat['key']);
-                $dataPoints[] = ['label' => $s($catLabel), 'pct' => round($cat['score_percentage'] ?? 0, 1)];
-            }
-        } else {
-            $dataPoints[] = ['label' => $s($attempt->test->getTranslation('title', $locale)), 'pct' => round($attempt->score_percentage ?? 0, 1)];
-        }
-    }
-
-    $count = count($dataPoints);
-    if ($count < 2) return;
-
     $points = [];
-    foreach ($dataPoints as $i => $dp) {
+    for ($i = 0; $i < $count; $i++) {
+        $cat = $categories[$i];
+        $pct = min(100, max(0, $cat['score_percentage'] ?? 0));
         $x = $padL + ($count > 1 ? ($i / ($count - 1)) * $plotW : $plotW / 2);
-        $y = $padT + $plotH - (($dp['pct'] / 100) * $plotH);
+        $y = $padT + $plotH - (($pct / 100) * $plotH);
+
+        $label = $cat['label'] ?? $cat['key'] ?? '';
+        if (is_array($label)) {
+            $label = $label[$locale] ?? $label['en'] ?? '';
+        }
+        $label = $s($label);
+
         $points[] = [
             'x' => round($x, 1),
             'y' => round($y, 1),
-            'pct' => $dp['pct'],
-            'label' => $dp['label'],
+            'pct' => round($pct),
+            'label' => $label,
         ];
     }
 @endphp
 
-<div style="text-align: center; margin: 15px 0; page-break-inside: avoid;">
-    <p style="font-weight: bold; font-size: 11px; margin-bottom: 6px; color: #1e40af;">
-        {{ $s($isAr ? 'نظرة عامة على الدرجات' : 'Score Overview') }}
-    </p>
-
+<div style="text-align: center; margin: 15px 0;">
     <img src="data:image/svg+xml;base64,{{ base64_encode('
         <svg xmlns="http://www.w3.org/2000/svg" width="' . $totalW . '" height="' . $totalH . '" viewBox="0 0 ' . $totalW . ' ' . $totalH . '">
             <rect x="0" y="0" width="' . $totalW . '" height="' . $totalH . '" fill="#ffffff"/>
@@ -88,10 +66,10 @@
                         <text x="' . $p['x'] . '" y="' . ($p['y'] - 8) . '" text-anchor="middle" font-size="8" font-weight="bold" fill="#1e40af" font-family="sans-serif">' . $p['pct'] . '%</text>';
             }, $points)) . '
 
-            ' . implode('', array_map(function($p, $i) use ($padT, $plotH) {
+            ' . implode('', array_map(function($p) use ($padT, $plotH) {
                 $ty = $padT + $plotH + 8;
-                return '<text x="' . $p['x'] . '" y="' . $ty . '" text-anchor="end" font-size="7" fill="#6b7280" font-family="sans-serif" transform="rotate(-70, ' . $p['x'] . ', ' . $ty . ')">' . htmlspecialchars($p['label']) . '</text>';
-            }, $points, array_keys($points))) . '
+                return '<text x="' . $p['x'] . '" y="' . $ty . '" text-anchor="end" font-size="7" fill="#6b7280" font-family="DejaVu Sans, sans-serif" transform="rotate(-55, ' . $p['x'] . ', ' . $ty . ')">' . htmlspecialchars($p['label']) . '</text>';
+            }, $points)) . '
         </svg>
     ') }}" width="{{ $totalW }}" height="{{ $totalH }}" style="max-width: 100%;" />
 </div>

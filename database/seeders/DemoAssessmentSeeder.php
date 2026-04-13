@@ -72,7 +72,8 @@ class DemoAssessmentSeeder extends Seeder
             'is_active' => true,
             'collect_name' => true,
             'collect_email' => true,
-            'collect_department' => true,
+            'collect_company' => true,
+            'collect_job_title' => true,
             'collect_age' => true,
             'collect_gender' => true,
         ]);
@@ -82,7 +83,8 @@ class DemoAssessmentSeeder extends Seeder
             [
                 'name' => 'Ahmed Hassan',
                 'email' => 'ahmed.hassan@demo.com',
-                'department' => 'Human Resources',
+                'company' => 'Edrak Group',
+                'job_title' => 'HR Manager',
                 'age' => 32,
                 'gender' => 'male',
                 'profile' => 'high_performer', // Will score generally high
@@ -90,7 +92,8 @@ class DemoAssessmentSeeder extends Seeder
             [
                 'name' => 'Sara Mohamed',
                 'email' => 'sara.mohamed@demo.com',
-                'department' => 'Marketing',
+                'company' => 'Edrak Media',
+                'job_title' => 'Marketing Specialist',
                 'age' => 28,
                 'gender' => 'female',
                 'profile' => 'balanced', // Will score moderately with variation
@@ -106,7 +109,8 @@ class DemoAssessmentSeeder extends Seeder
                 'email' => $accountData['email'],
                 'password' => bcrypt('password123'),
                 'phone' => null,
-                'department' => $accountData['department'],
+                'company' => $accountData['company'],
+                'job_title' => $accountData['job_title'],
                 'age' => $accountData['age'],
                 'gender' => $accountData['gender'],
             ]);
@@ -116,7 +120,8 @@ class DemoAssessmentSeeder extends Seeder
                 'participant_account_id' => $account->id,
                 'name' => $accountData['name'],
                 'email' => $accountData['email'],
-                'department' => $accountData['department'],
+                'company' => $accountData['company'],
+                'job_title' => $accountData['job_title'],
                 'age' => $accountData['age'],
                 'gender' => $accountData['gender'],
             ]);

@@ -53,6 +53,7 @@ class EmotionalIntelligenceSeeder extends Seeder
                 ['key' => 'relationship_management', 'label' => ['en' => 'Relationship Management', 'ar' => 'إدارة العلاقات'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'bar',
         ]);
 
         // Questions ordered by the last column (sort order) from the images

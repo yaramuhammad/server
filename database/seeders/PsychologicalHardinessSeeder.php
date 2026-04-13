@@ -52,6 +52,7 @@ class PsychologicalHardinessSeeder extends Seeder
                 ['key' => 'challenge', 'label' => ['en' => 'Challenge', 'ar' => 'التحدي'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'doughnut',
         ]);
 
         // Category assignments from last pages:

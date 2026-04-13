@@ -14,6 +14,12 @@
         line-height: 1.5;
         padding: 0 10px;
     }
+    html[dir="rtl"] body {
+        text-align: right;
+    }
+    html[dir="rtl"] th {
+        text-align: right;
+    }
     .header {
         text-align: center;
         border-bottom: 2px solid #2563eb;

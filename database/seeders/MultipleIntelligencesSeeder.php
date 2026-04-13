@@ -56,6 +56,7 @@ class MultipleIntelligencesSeeder extends Seeder
                 ['key' => 'intrapersonal', 'label' => ['en' => 'Intrapersonal Intelligence', 'ar' => 'الذكاء الشخصي'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'column',
         ]);
 
         // Category assignments from page 3:

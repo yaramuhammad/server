@@ -29,6 +29,7 @@ class StoreTestRequest extends FormRequest
             'scale_config.max' => ['required', 'integer', 'min:1'],
             'scale_config.labels' => ['nullable', 'array'],
             'scoring_type' => ['sometimes', 'in:simple,category,range,weighted'],
+            'chart_type' => ['sometimes', 'in:bar,pie,column,line,doughnut'],
             'scoring_config' => ['nullable', 'array'],
             'scoring_config.categories' => ['nullable', 'array'],
             'scoring_config.categories.*.key' => ['required_with:scoring_config.categories', 'string', 'max:100'],

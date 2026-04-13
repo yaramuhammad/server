@@ -77,11 +77,17 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('admin')->group(func
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/summary', [ExportController::class, 'linkSummary']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/detailed', [ExportController::class, 'linkDetailed']);
 
+    Route::get('assessments/{assessment:uuid}/export/summary-excel', [ExportController::class, 'assessmentSummaryExcel']);
+    Route::get('assessments/{assessment:uuid}/export/detailed-excel', [ExportController::class, 'assessmentDetailedExcel']);
+    Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/summary-excel', [ExportController::class, 'linkSummaryExcel']);
+    Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/detailed-excel', [ExportController::class, 'linkDetailedExcel']);
+
     Route::get('assessments/{assessment:uuid}/export/summary-pdf', [ExportController::class, 'assessmentSummaryPdf']);
     Route::get('assessments/{assessment:uuid}/export/detailed-pdf', [ExportController::class, 'assessmentDetailedPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/summary-pdf', [ExportController::class, 'linkSummaryPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/detailed-pdf', [ExportController::class, 'linkDetailedPdf']);
     Route::get('attempts/{attempt:uuid}/export/pdf', [ExportController::class, 'attemptPdf']);
+    Route::get('participants/export/{participant:uuid}/psycho-profile/pdf', [ExportController::class, 'participantProfilePdf']);
     Route::get('participants', [ParticipantManagementController::class, 'index']);
     Route::get('participants/combined-report/pdf', [ExportController::class, 'participantCombinedPdf']);
     Route::get('participants/{participantAccount:uuid}', [ParticipantManagementController::class, 'show']);

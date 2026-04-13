@@ -13,6 +13,8 @@ class TestSummaryResource extends JsonResource
             'id' => $this->uuid,
             'title' => $this->getTranslation('title'),
             'status' => $this->status,
+            'scoring_type' => $this->scoring_type,
+            'chart_type' => $this->chart_type ?? 'bar',
             'questions_count' => $this->whenCounted('questions'),
             'created_at' => $this->created_at?->toISOString(),
         ];

@@ -54,6 +54,7 @@ class BigFivePersonalitySeeder extends Seeder
                 ['key' => 'conscientiousness', 'label' => ['en' => 'Conscientiousness', 'ar' => 'يقظة الضمير'], 'interpretation' => $interp],
             ]],
             'randomize_questions' => false,
+            'chart_type' => 'pie',
         ]);
 
         // Category assignments from page 3:
