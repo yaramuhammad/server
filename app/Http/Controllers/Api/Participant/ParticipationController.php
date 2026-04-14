@@ -175,6 +175,7 @@ class ParticipationController extends Controller
                 'remaining_seconds' => $existingAttempt->getRemainingSeconds(),
                 'saved_responses' => $savedResponses,
                 'scale_config' => $this->resolveScaleConfig($test->scale_config),
+                'instructions' => $test->getTranslation('instructions'),
             ]);
         }
 
@@ -198,6 +199,7 @@ class ParticipationController extends Controller
             'remaining_seconds' => $attempt->getRemainingSeconds(),
             'saved_responses' => [],
             'scale_config' => $this->resolveScaleConfig($test->scale_config),
+            'instructions' => $test->getTranslation('instructions'),
         ], 'Test started.', 201);
     }
 
