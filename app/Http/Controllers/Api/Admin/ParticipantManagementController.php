@@ -254,4 +254,34 @@ class ParticipantManagementController extends Controller
     {
         return $pdfExportService->participantCombinedReport($participantAccount);
     }
+
+    /**
+     * Delete a per-link participant record along with its attempts, responses,
+     * and retake grants (cascade). The underlying ParticipantAccount is left
+     * intact so the person can still take other assessments.
+     */
+    public function destroy(Participant $participant)
+    {
+        $participant->delete();
+
+        return $this->success(['message' => 'Participant deleted.']);
+    }
+
+    /**
+     * Delete a ParticipantAccount along with all of its per-link Participant
+     * records (which cascades through test_attempts, responses, retake_grants).
+     */
+    public function destroyAccount(ParticipantAccount $participantAccount)
+    {
+        // Delete each linked Participant so its attempts/responses cascade.
+        // The FK on participants.participant_account_id is null-on-delete, so
+        // we must do this explicitly instead of relying on the account delete.
+        foreach ($participantAccount->participants as $participant) {
+            $participant->delete();
+        }
+
+        $participantAccount->delete();
+
+        return $this->success(['message' => 'Account deleted.']);
+    }
 }

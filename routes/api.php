@@ -86,8 +86,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('admin')->group(func
     Route::get('assessments/{assessment:uuid}/export/detailed-pdf', [ExportController::class, 'assessmentDetailedPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/summary-pdf', [ExportController::class, 'linkSummaryPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/detailed-pdf', [ExportController::class, 'linkDetailedPdf']);
+    Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/profiles-zip', [ExportController::class, 'linkParticipantProfilesZip']);
     Route::get('attempts/{attempt:uuid}/export/pdf', [ExportController::class, 'attemptPdf']);
     Route::get('participants/export/{participant:uuid}/psycho-profile/pdf', [ExportController::class, 'participantProfilePdf']);
+    Route::delete('participants/{participant:uuid}', [ParticipantManagementController::class, 'destroy']);
+    Route::delete('participant-accounts/{participantAccount:uuid}', [ParticipantManagementController::class, 'destroyAccount']);
     Route::get('participants', [ParticipantManagementController::class, 'index']);
     Route::get('participants/combined-report/pdf', [ExportController::class, 'participantCombinedPdf']);
     Route::get('participants/{participantAccount:uuid}', [ParticipantManagementController::class, 'show']);

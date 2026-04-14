@@ -131,6 +131,17 @@ class ExportController extends Controller
         return $this->pdfExportService->linkDetailed($assessment, $link);
     }
 
+    public function linkParticipantProfilesZip(Assessment $assessment, AssessmentLink $link)
+    {
+        $this->authorize('view', $assessment);
+
+        if ($link->assessment_id !== $assessment->id) {
+            return $this->error('Link does not belong to this assessment.', 404);
+        }
+
+        return $this->pdfExportService->linkParticipantProfilesZip($link);
+    }
+
     public function attemptPdf(TestAttempt $attempt)
     {
         $this->authorize('view', $attempt);

@@ -96,19 +96,10 @@ class CsvExportService
 
     private function writeSummaryRows($handle, $tests, $participants): void
     {
-        $header = [
-            'participant_name', 'participant_email', 'participant_phone',
-            'participant_company', 'participant_job_title', 'participant_age', 'participant_gender',
-            'participant_locale', 'completed_at',
-        ];
+        $header = ['Name', 'Email', 'Company', 'Job Title'];
 
         foreach ($tests as $test) {
-            $testName = $test->getTranslation('title');
-            $header[] = "{$testName} - Score Raw";
-            $header[] = "{$testName} - Score Max";
-            $header[] = "{$testName} - Score %";
-            $header[] = "{$testName} - Score Avg";
-            $header[] = "{$testName} - Time (s)";
+            $header[] = $test->getTranslation('title');
         }
 
         fputcsv($handle, $header);
@@ -117,24 +108,17 @@ class CsvExportService
             $row = [
                 $participant->name,
                 $participant->email,
-                $participant->phone,
                 $participant->company,
                 $participant->job_title,
-                $participant->age,
-                $participant->gender,
-                $participant->locale,
-                $participant->attempts->max('completed_at')?->toDateTimeString(),
             ];
 
             $attemptsByTest = $participant->attempts->keyBy('test_id');
 
             foreach ($tests as $test) {
                 $attempt = $attemptsByTest->get($test->id);
-                $row[] = $attempt?->score_raw ?? '';
-                $row[] = $attempt?->score_max ?? '';
-                $row[] = $attempt?->score_percentage ?? '';
-                $row[] = $attempt?->score_average ?? '';
-                $row[] = $attempt?->time_spent_seconds ?? '';
+                $row[] = $attempt?->score_percentage !== null
+                    ? number_format($attempt->score_percentage, 1) . '%'
+                    : '';
             }
 
             fputcsv($handle, $row);

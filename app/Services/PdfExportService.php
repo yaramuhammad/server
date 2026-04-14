@@ -197,6 +197,74 @@ class PdfExportService
         return $pdf->download("psycho_profile_{$name}_" . now()->format('Y-m-d_His') . '.pdf');
     }
 
+    /**
+     * Build a single ZIP containing one psycho-profile PDF per completed participant
+     * on the given link. Returned as a streamed download so the browser triggers
+     * only one save prompt.
+     */
+    public function linkParticipantProfilesZip(AssessmentLink $link)
+    {
+        $participants = $link->participants()
+            ->with(['attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question']),
+                    'assessmentLink.assessment'])
+            ->get()
+            ->filter(fn ($p) => $p->attempts->count() > 0)
+            ->values();
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'profiles_') . '.zip';
+        $zip = new \ZipArchive();
+        if ($zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Could not create zip archive.');
+        }
+
+        $usedNames = [];
+        foreach ($participants as $participant) {
+            $assessment = $participant->assessmentLink?->assessment;
+            $assessments = collect();
+            if ($assessment) {
+                $assessments->push([
+                    'assessment_title' => $assessment->getTranslation('title'),
+                    'attempts' => $participant->attempts,
+                ]);
+            }
+
+            $pdfContent = Pdf::loadView('reports.participant-combined', [
+                'accountName' => $participant->name ?? 'Unknown',
+                'accountEmail' => $participant->email,
+                'accountPhone' => $participant->phone,
+                'accountCompany' => $participant->company,
+                'accountJobTitle' => $participant->job_title,
+                'accountAge' => $participant->age,
+                'accountGender' => $participant->gender,
+                'assessments' => $assessments,
+                'includeResponses' => true,
+                'dir' => $this->getDir(),
+            ])->output();
+
+            $safeName = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $participant->name ?? 'participant');
+            $filename = "psycho_profile_{$safeName}.pdf";
+
+            // Deduplicate filenames if two participants share the same (sanitized) name
+            if (isset($usedNames[$filename])) {
+                $usedNames[$filename]++;
+                $filename = "psycho_profile_{$safeName}_{$usedNames[$filename]}.pdf";
+            } else {
+                $usedNames[$filename] = 1;
+            }
+
+            $zip->addFromString($filename, $pdfContent);
+        }
+
+        $zip->close();
+
+        $linkTitle = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $link->title ?? 'link');
+        $downloadName = "profiles_{$linkTitle}_" . now()->format('Y-m-d_His') . '.zip';
+
+        return response()->download($tmpPath, $downloadName, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
     private function getAssessmentParticipants(Assessment $assessment)
     {
         return Participant::whereHas('assessmentLink', fn ($q) => $q->where('assessment_id', $assessment->id))

@@ -32,9 +32,11 @@
             && count(array_diff($catKeys, $bigFiveKeys)) === 0;
 
         if ($isBigFive) {
+            $testTitle = $attempt->test->getTranslation('title', $locale);
             foreach ($cats as $cat) {
                 $catLabel = is_array($cat['label'] ?? null) ? ($cat['label'][$locale] ?? $cat['key']) : ($cat['label'] ?? $cat['key']);
-                $dataPoints[] = ['label' => $s($catLabel), 'pct' => round($cat['score_percentage'] ?? 0, 1)];
+                $combined = $testTitle ? "{$testTitle} — {$catLabel}" : $catLabel;
+                $dataPoints[] = ['label' => $s($combined), 'pct' => round($cat['score_percentage'] ?? 0, 1)];
             }
         } else {
             $dataPoints[] = ['label' => $s($attempt->test->getTranslation('title', $locale)), 'pct' => round($attempt->score_percentage ?? 0, 1)];
