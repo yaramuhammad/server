@@ -65,14 +65,18 @@
 
         // Label at mid-angle outside the doughnut
         $midAngle = deg2rad($currentAngle + $sliceAngle / 2);
-        $labelR = $outerR + 18;
+        $labelR = $outerR + 28;
         $labelX = $cx + $labelR * cos($midAngle);
         $labelY = $cy + $labelR * sin($midAngle);
 
-        $midDeg = $currentAngle + $sliceAngle / 2;
-        $anchor = 'middle';
-        if ($midDeg > -80 && $midDeg < 80) $anchor = $isAr ? 'end' : 'start';
-        elseif ($midDeg > 100 || $midDeg < -100) $anchor = $isAr ? 'start' : 'end';
+        $dx = $labelX - $cx;
+        if ($dx > 15) {
+            $anchor = 'start';
+        } elseif ($dx < -15) {
+            $anchor = 'end';
+        } else {
+            $anchor = 'middle';
+        }
 
         $slices[] = [
             'path' => $path,
@@ -85,6 +89,24 @@
         ];
 
         $currentAngle += $sliceAngle;
+    }
+
+    // Resolve vertical label collisions on each side independently.
+    $minGap = 12;
+    $sides = ['left' => [], 'right' => []];
+    foreach ($slices as $idx => $slice) {
+        $side = ($slice['labelX'] >= $cx) ? 'right' : 'left';
+        $sides[$side][] = $idx;
+    }
+    foreach ($sides as $indices) {
+        usort($indices, fn($a, $b) => $slices[$a]['labelY'] <=> $slices[$b]['labelY']);
+        for ($j = 1; $j < count($indices); $j++) {
+            $prev = $slices[$indices[$j - 1]]['labelY'];
+            $cur = $slices[$indices[$j]]['labelY'];
+            if ($cur - $prev < $minGap) {
+                $slices[$indices[$j]]['labelY'] = round($prev + $minGap, 1);
+            }
+        }
     }
 
     $fontFamily = 'DejaVu Sans, sans-serif';

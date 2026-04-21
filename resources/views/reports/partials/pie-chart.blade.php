@@ -50,14 +50,20 @@
         $label = $s($label);
 
         $midAngle = deg2rad($currentAngle + $sliceAngle / 2);
-        $labelR = $radius + 18;
+        $labelR = $radius + 28;
         $labelX = $cx + $labelR * cos($midAngle);
         $labelY = $cy + $labelR * sin($midAngle);
 
-        $midDeg = $currentAngle + $sliceAngle / 2;
-        $anchor = 'middle';
-        if ($midDeg > -80 && $midDeg < 80) $anchor = $isAr ? 'end' : 'start';
-        elseif ($midDeg > 100 || $midDeg < -100) $anchor = $isAr ? 'start' : 'end';
+        // Anchor based on horizontal position of the label relative to center.
+        // Right half -> 'start' (text grows rightward), left half -> 'end', near vertical -> 'middle'.
+        $dx = $labelX - $cx;
+        if ($dx > 15) {
+            $anchor = 'start';
+        } elseif ($dx < -15) {
+            $anchor = 'end';
+        } else {
+            $anchor = 'middle';
+        }
 
         $slices[] = [
             'path' => $path,
@@ -70,6 +76,24 @@
         ];
 
         $currentAngle += $sliceAngle;
+    }
+
+    // Resolve vertical label collisions on each side independently.
+    $minGap = 12;
+    $sides = ['left' => [], 'right' => []];
+    foreach ($slices as $idx => $slice) {
+        $side = ($slice['labelX'] >= $cx) ? 'right' : 'left';
+        $sides[$side][] = $idx;
+    }
+    foreach ($sides as $indices) {
+        usort($indices, fn($a, $b) => $slices[$a]['labelY'] <=> $slices[$b]['labelY']);
+        for ($j = 1; $j < count($indices); $j++) {
+            $prev = $slices[$indices[$j - 1]]['labelY'];
+            $cur = $slices[$indices[$j]]['labelY'];
+            if ($cur - $prev < $minGap) {
+                $slices[$indices[$j]]['labelY'] = round($prev + $minGap, 1);
+            }
+        }
     }
 @endphp
 

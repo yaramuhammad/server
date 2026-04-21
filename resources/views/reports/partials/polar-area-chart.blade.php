@@ -44,14 +44,18 @@
 
         // Label position at mid-angle, outside max radius
         $midAngle = deg2rad($startAngle + $angleStep / 2);
-        $labelR = $maxRadius + 20;
+        $labelR = $maxRadius + 28;
         $labelX = $cx + $labelR * cos($midAngle);
         $labelY = $cy + $labelR * sin($midAngle);
 
-        $anchor = 'middle';
-        $midDeg = $startAngle + $angleStep / 2;
-        if ($midDeg > -80 && $midDeg < 80) $anchor = $isAr ? 'end' : 'start';
-        elseif ($midDeg > 100 || $midDeg < -100) $anchor = $isAr ? 'start' : 'end';
+        $dx = $labelX - $cx;
+        if ($dx > 15) {
+            $anchor = 'start';
+        } elseif ($dx < -15) {
+            $anchor = 'end';
+        } else {
+            $anchor = 'middle';
+        }
 
         $sectors[] = [
             'path' => "M {$cx},{$cy} L " . round($x1, 1) . "," . round($y1, 1) . " A {$radius},{$radius} 0 {$largeArc},1 " . round($x2, 1) . "," . round($y2, 1) . " Z",
@@ -62,6 +66,24 @@
             'labelY' => round($labelY, 1),
             'anchor' => $anchor,
         ];
+    }
+
+    // Resolve vertical label collisions on each side independently.
+    $minGap = 12;
+    $sides = ['left' => [], 'right' => []];
+    foreach ($sectors as $idx => $sector) {
+        $side = ($sector['labelX'] >= $cx) ? 'right' : 'left';
+        $sides[$side][] = $idx;
+    }
+    foreach ($sides as $indices) {
+        usort($indices, fn($a, $b) => $sectors[$a]['labelY'] <=> $sectors[$b]['labelY']);
+        for ($j = 1; $j < count($indices); $j++) {
+            $prev = $sectors[$indices[$j - 1]]['labelY'];
+            $cur = $sectors[$indices[$j]]['labelY'];
+            if ($cur - $prev < $minGap) {
+                $sectors[$indices[$j]]['labelY'] = round($prev + $minGap, 1);
+            }
+        }
     }
 
     // Grid circles
