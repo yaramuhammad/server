@@ -204,9 +204,10 @@ class PdfExportService
      */
     public function linkParticipantProfilesZip(AssessmentLink $link)
     {
+        $link->load('assessment');
+
         $participants = $link->participants()
-            ->with(['attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question']),
-                    'assessmentLink.assessment'])
+            ->with(['attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question'])])
             ->get()
             ->filter(fn ($p) => $p->attempts->count() > 0)
             ->values();
@@ -217,13 +218,16 @@ class PdfExportService
             throw new \RuntimeException('Could not create zip archive.');
         }
 
+        // Hoist values that are identical for every participant on this link.
+        $dir = $this->getDir();
+        $assessmentTitle = $link->assessment?->getTranslation('title');
+
         $usedNames = [];
         foreach ($participants as $participant) {
-            $assessment = $participant->assessmentLink?->assessment;
             $assessments = collect();
-            if ($assessment) {
+            if ($assessmentTitle !== null) {
                 $assessments->push([
-                    'assessment_title' => $assessment->getTranslation('title'),
+                    'assessment_title' => $assessmentTitle,
                     'attempts' => $participant->attempts,
                 ]);
             }
@@ -238,13 +242,12 @@ class PdfExportService
                 'accountGender' => $participant->gender,
                 'assessments' => $assessments,
                 'includeResponses' => true,
-                'dir' => $this->getDir(),
+                'dir' => $dir,
             ])->output();
 
             $safeName = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $participant->name ?? 'participant');
             $filename = "psycho_profile_{$safeName}.pdf";
 
-            // Deduplicate filenames if two participants share the same (sanitized) name
             if (isset($usedNames[$filename])) {
                 $usedNames[$filename]++;
                 $filename = "psycho_profile_{$safeName}_{$usedNames[$filename]}.pdf";
@@ -253,6 +256,10 @@ class PdfExportService
             }
 
             $zip->addFromString($filename, $pdfContent);
+
+            // Free the DomPDF instance and its parsed DOM/style trees between iterations.
+            unset($pdfContent);
+            gc_collect_cycles();
         }
 
         $zip->close();
