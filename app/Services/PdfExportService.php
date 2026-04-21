@@ -8,6 +8,7 @@ use App\Models\Participant;
 use App\Models\ParticipantAccount;
 use App\Models\TestAttempt;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class PdfExportService
 {
@@ -204,13 +205,17 @@ class PdfExportService
      */
     public function linkParticipantProfilesZip(AssessmentLink $link)
     {
+        $overallStart = microtime(true);
+
         $link->load('assessment');
 
+        $queryStart = microtime(true);
         $participants = $link->participants()
             ->with(['attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question'])])
             ->get()
             ->filter(fn ($p) => $p->attempts->count() > 0)
             ->values();
+        $queryMs = round((microtime(true) - $queryStart) * 1000);
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'profiles_') . '.zip';
         $zip = new \ZipArchive();
@@ -218,12 +223,22 @@ class PdfExportService
             throw new \RuntimeException('Could not create zip archive.');
         }
 
-        // Hoist values that are identical for every participant on this link.
         $dir = $this->getDir();
         $assessmentTitle = $link->assessment?->getTranslation('title');
 
+        Log::info('[ProfilesZip] starting', [
+            'link_id' => $link->id,
+            'participant_count' => $participants->count(),
+            'db_query_ms' => $queryMs,
+        ]);
+
         $usedNames = [];
-        foreach ($participants as $participant) {
+        $perParticipant = [];
+        $totalRenderMs = 0;
+        $totalViewMs = 0;
+        $totalDompdfMs = 0;
+
+        foreach ($participants as $i => $participant) {
             $assessments = collect();
             if ($assessmentTitle !== null) {
                 $assessments->push([
@@ -232,7 +247,11 @@ class PdfExportService
                 ]);
             }
 
-            $pdfContent = Pdf::loadView('reports.participant-combined', [
+            // Split the render into its two phases so we can see which dominates:
+            //   viewMs   = Blade -> HTML string
+            //   dompdfMs = HTML  -> PDF binary
+            $tView = microtime(true);
+            $html = view('reports.participant-combined', [
                 'accountName' => $participant->name ?? 'Unknown',
                 'accountEmail' => $participant->email,
                 'accountPhone' => $participant->phone,
@@ -243,7 +262,31 @@ class PdfExportService
                 'assessments' => $assessments,
                 'includeResponses' => true,
                 'dir' => $dir,
-            ])->output();
+            ])->render();
+            $viewMs = round((microtime(true) - $tView) * 1000);
+
+            $svgCount = substr_count($html, 'data:image/svg+xml;base64,');
+            $attemptCount = $participant->attempts->count();
+
+            $tDompdf = microtime(true);
+            $pdfContent = Pdf::loadHTML($html)->output();
+            $dompdfMs = round((microtime(true) - $tDompdf) * 1000);
+
+            $renderMs = $viewMs + $dompdfMs;
+            $totalViewMs += $viewMs;
+            $totalDompdfMs += $dompdfMs;
+            $totalRenderMs += $renderMs;
+
+            $perParticipant[] = [
+                'i' => $i,
+                'attempts' => $attemptCount,
+                'svgs' => $svgCount,
+                'html_kb' => round(strlen($html) / 1024),
+                'pdf_kb' => round(strlen($pdfContent) / 1024),
+                'view_ms' => $viewMs,
+                'dompdf_ms' => $dompdfMs,
+                'total_ms' => $renderMs,
+            ];
 
             $safeName = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $participant->name ?? 'participant');
             $filename = "psycho_profile_{$safeName}.pdf";
@@ -257,18 +300,41 @@ class PdfExportService
 
             $zip->addFromString($filename, $pdfContent);
 
-            // Free the DomPDF instance and its parsed DOM/style trees between iterations.
-            unset($pdfContent);
+            unset($pdfContent, $html);
             gc_collect_cycles();
         }
 
         $zip->close();
 
+        $totalMs = round((microtime(true) - $overallStart) * 1000);
+
+        Log::info('[ProfilesZip] per-participant', $perParticipant);
+        Log::info('[ProfilesZip] summary', [
+            'total_ms' => $totalMs,
+            'render_total_ms' => $totalRenderMs,
+            'view_total_ms' => $totalViewMs,
+            'dompdf_total_ms' => $totalDompdfMs,
+            'participants' => $participants->count(),
+        ]);
+
         $linkTitle = preg_replace('/[^\w\x{0600}-\x{06FF}-]/u', '_', $link->title ?? 'link');
         $downloadName = "profiles_{$linkTitle}_" . now()->format('Y-m-d_His') . '.zip';
 
+        // Expose timing breakdown in response headers so it's readable from
+        // the browser's DevTools Network tab (no log file access needed).
+        $perParticipantCompact = array_map(
+            fn ($r) => "#{$r['i']}:view={$r['view_ms']}ms,dompdf={$r['dompdf_ms']}ms,svgs={$r['svgs']},att={$r['attempts']},pdf={$r['pdf_kb']}kb",
+            $perParticipant
+        );
+
         return response()->download($tmpPath, $downloadName, [
             'Content-Type' => 'application/zip',
+            'X-Profiling-Total-Ms' => $totalMs,
+            'X-Profiling-DB-Ms' => $queryMs,
+            'X-Profiling-View-Total-Ms' => $totalViewMs,
+            'X-Profiling-Dompdf-Total-Ms' => $totalDompdfMs,
+            'X-Profiling-Participants' => $participants->count(),
+            'X-Profiling-PerParticipant' => implode(' | ', $perParticipantCompact),
         ])->deleteFileAfterSend(true);
     }
 
