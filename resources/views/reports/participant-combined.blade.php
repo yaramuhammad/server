@@ -90,7 +90,32 @@
             @if($scoringType === 'category' && !empty($details['categories']))
                 @php
                     $chartType = $attempt->test->chart_type ?? 'bar';
+
+                    // Resolve the overall band by matching the attempt's percentage
+                    // against the first category's interpretation thresholds.
+                    // Tests where every category shares the same bands (e.g. RTBQ-20)
+                    // can therefore display a single overall label.
+                    $overallBandLabel = null;
+                    $firstCatConfig = $attempt->test->scoring_config['categories'][0] ?? null;
+                    if ($firstCatConfig && !empty($firstCatConfig['interpretation'])) {
+                        foreach ($firstCatConfig['interpretation'] as $band) {
+                            if ($attempt->score_percentage >= $band['min'] && $attempt->score_percentage <= $band['max']) {
+                                $rawLabel = $band['label'] ?? null;
+                                $overallBandLabel = is_array($rawLabel) ? ($rawLabel[$lang] ?? $rawLabel['en'] ?? null) : $rawLabel;
+                                break;
+                            }
+                        }
+                    }
                 @endphp
+
+                @if($overallBandLabel)
+                    <div class="range-indicator">
+                        <div class="range-label">{{ $s($overallBandLabel) }}</div>
+                        <div style="font-size: 9px; color: #888; margin-top: 4px;">
+                            {{ $s($isAr ? 'النتيجة الإجمالية' : 'Overall Result') }}: {{ $attempt->score_percentage }}%
+                        </div>
+                    </div>
+                @endif
 
                 <p style="font-weight: bold; font-size: 11px; margin: 10px 0 6px; color: #1e40af;">
                     {{ $s($isAr ? 'تفصيل الأبعاد' : 'Category Breakdown') }}
