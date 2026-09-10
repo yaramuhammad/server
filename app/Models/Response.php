@@ -31,11 +31,18 @@ class Response extends Model
     {
         static::creating(function (Response $response) {
             if (!isset($response->scored_value)) {
-                $question = $response->question;
-                $response->scored_value = $question->calculateScoredValue($response->value);
+                $response->scored_value = $response->question->calculateScoredValue($response->value);
             }
             if (!isset($response->answered_at)) {
                 $response->answered_at = now();
+            }
+        });
+
+        // When the raw value changes on an existing response, the derived
+        // scored_value must be recomputed — unless it was explicitly set.
+        static::updating(function (Response $response) {
+            if ($response->isDirty('value') && !$response->isDirty('scored_value')) {
+                $response->scored_value = $response->question->calculateScoredValue($response->value);
             }
         });
     }
