@@ -37,7 +37,8 @@ class AssessmentController extends Controller
             $query->where('status', $status);
         }
 
-        $assessments = $query->latest()->paginate(20);
+        $perPage = min((int) $request->input('per_page', 20) ?: 20, 100);
+        $assessments = $query->latest()->paginate($perPage);
 
         return AssessmentResource::collection($assessments)->additional([
             'success' => true,

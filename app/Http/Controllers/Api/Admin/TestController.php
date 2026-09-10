@@ -36,7 +36,8 @@ class TestController extends Controller
             $query->where('status', $status);
         }
 
-        $tests = $query->latest()->paginate(20);
+        $perPage = min((int) $request->input('per_page', 20) ?: 20, 100);
+        $tests = $query->latest()->paginate($perPage);
 
         return TestSummaryResource::collection($tests)->additional([
             'success' => true,
