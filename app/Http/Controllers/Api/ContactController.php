@@ -20,7 +20,7 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        $adminEmail = config('mail.admin_address') ?: env('ADMIN_EMAIL');
+        $adminEmail = config('mail.admin_address');
 
         if (!$adminEmail) {
             return response()->json([
