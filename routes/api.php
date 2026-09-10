@@ -126,11 +126,22 @@ Route::middleware('throttle:participate')->prefix('participate')->group(function
         ->middleware('throttle:link-password');
     Route::post('{token}/register', [ParticipationController::class, 'register']);
 
-    Route::prefix('session/{participant:uuid}')->withoutScopedBindings()->group(function () {
-        Route::get('/', [ParticipationController::class, 'getSession']);
-        Route::get('test/{test:uuid}', [ParticipationController::class, 'startTest']);
-        Route::post('test/{test:uuid}/responses', [ParticipationController::class, 'submitResponses']);
-        Route::post('test/{test:uuid}/complete', [ParticipationController::class, 'completeTest']);
-        Route::get('results', [ParticipationController::class, 'getResults']);
-    });
+    // Bootstrap a session token for a participant that already exists (used by
+    // clients that were mid-assessment before session tokens shipped). Needs
+    // the link token in the body — the same pair (link token + participant
+    // UUID) that registration already grants access with, so this hands out
+    // nothing that wasn't already reachable.
+    Route::post('session/{participant:uuid}/token', [ParticipationController::class, 'issueSessionToken'])
+        ->withoutScopedBindings();
+
+    Route::prefix('session/{participant:uuid}')
+        ->withoutScopedBindings()
+        ->middleware('participant.session')
+        ->group(function () {
+            Route::get('/', [ParticipationController::class, 'getSession']);
+            Route::get('test/{test:uuid}', [ParticipationController::class, 'startTest']);
+            Route::post('test/{test:uuid}/responses', [ParticipationController::class, 'submitResponses']);
+            Route::post('test/{test:uuid}/complete', [ParticipationController::class, 'completeTest']);
+            Route::get('results', [ParticipationController::class, 'getResults']);
+        });
 });

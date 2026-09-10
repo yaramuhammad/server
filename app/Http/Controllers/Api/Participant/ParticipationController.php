@@ -16,6 +16,7 @@ use App\Models\Participant;
 use App\Models\Response;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Support\ParticipantSessionToken;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -98,6 +99,30 @@ class ParticipationController extends Controller
         ]);
 
         return $this->success(new ParticipantResource($participant), 'Registered successfully.', 201);
+    }
+
+    /**
+     * Issue (or re-issue) the session token for a participant, given the link
+     * token it belongs to. The client calls this right after register /
+     * assign-link and on any 401 from a guarded session endpoint. Requires
+     * the same (link token + participant UUID) pair that registration
+     * already grants session access with, so it hands out nothing new.
+     */
+    public function issueSessionToken(Request $request, Participant $participant)
+    {
+        $data = $request->validate([
+            'link_token' => ['required', 'string'],
+        ]);
+
+        $link = $participant->assessmentLink;
+
+        if (! $link || ! hash_equals((string) $link->token, $data['link_token'])) {
+            return $this->error('This session does not match the link.', 403);
+        }
+
+        return $this->success([
+            'session_token' => ParticipantSessionToken::for($participant),
+        ]);
     }
 
     public function getSession(Participant $participant)
