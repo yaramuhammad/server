@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Participant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TestAttemptResource;
+use App\Mail\PasswordResetMail;
 use App\Models\AssessmentLink;
 use App\Models\Participant;
 use App\Models\ParticipantAccount;
@@ -12,6 +13,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ParticipantPortalController extends Controller
@@ -194,10 +196,12 @@ class ParticipantPortalController extends Controller
             'email' => ['required', 'email'],
         ]);
 
+        $genericMessage = 'If an account exists with that email, a password reset link has been sent.';
+
         $account = ParticipantAccount::where('email', $request->email)->first();
 
         if (!$account) {
-            return $this->success(null, 'If an account exists with that email, a reset token has been generated.');
+            return $this->success(null, $genericMessage);
         }
 
         DB::table('participant_password_reset_tokens')->where('email', $request->email)->delete();
@@ -210,9 +214,19 @@ class ParticipantPortalController extends Controller
             'created_at' => now(),
         ]);
 
-        return $this->success([
+        $resetUrl = rtrim(config('app.frontend_url'), '/') . '/portal/reset-password?' . http_build_query([
+            'email' => $account->email,
             'token' => $token,
-        ], 'Reset token generated.');
+        ]);
+
+        Mail::to($account->email)->queue(new PasswordResetMail(
+            recipientName: $account->name,
+            resetUrl: $resetUrl,
+            token: $token,
+            expiresInMinutes: 60,
+        ));
+
+        return $this->success(null, $genericMessage);
     }
 
     public function resetPassword(Request $request)

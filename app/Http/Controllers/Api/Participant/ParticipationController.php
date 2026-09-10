@@ -203,12 +203,23 @@ class ParticipationController extends Controller
         ], 'Test started.', 201);
     }
 
-    public function submitResponses(SubmitResponsesRequest $request, Participant $participant, Test $test)
+    /**
+     * Resolve the participant's current in-progress attempt for a test,
+     * scoped to the round after the latest retake grant (if any).
+     */
+    private function currentInProgressAttempt(Participant $participant, Test $test): TestAttempt
     {
-        $attempt = $participant->attempts()
+        $assessmentId = $participant->assessmentLink()->value('assessment_id');
+
+        return $participant->currentAttempts($assessmentId)
             ->where('test_id', $test->id)
             ->where('status', 'in_progress')
             ->firstOrFail();
+    }
+
+    public function submitResponses(SubmitResponsesRequest $request, Participant $participant, Test $test)
+    {
+        $attempt = $this->currentInProgressAttempt($participant, $test);
 
         if ($attempt->isTimedOut()) {
             $attempt->update([
@@ -238,10 +249,7 @@ class ParticipationController extends Controller
 
     public function completeTest(Participant $participant, Test $test)
     {
-        $attempt = $participant->attempts()
-            ->where('test_id', $test->id)
-            ->where('status', 'in_progress')
-            ->firstOrFail();
+        $attempt = $this->currentInProgressAttempt($participant, $test);
 
         // Validate all required questions have been answered
         $requiredCount = $test->questions()->where('is_required', true)->count();

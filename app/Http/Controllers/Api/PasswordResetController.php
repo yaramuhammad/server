@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetMail;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
@@ -20,11 +22,13 @@ class PasswordResetController extends Controller
             'email' => ['required', 'email'],
         ]);
 
+        $genericMessage = 'If an account exists with that email, a password reset link has been sent.';
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             // Return success even if user not found (prevent email enumeration)
-            return $this->success(null, 'If an account exists with that email, a reset token has been generated.');
+            return $this->success(null, $genericMessage);
         }
 
         // Delete any existing tokens for this email
@@ -38,12 +42,19 @@ class PasswordResetController extends Controller
             'created_at' => now(),
         ]);
 
-        // In production, this token would be sent via email.
-        // For now, return it in the response for development.
-        return $this->success([
+        $resetUrl = rtrim(config('app.frontend_url'), '/') . '/admin/reset-password?' . http_build_query([
+            'email' => $user->email,
             'token' => $token,
-            'message' => 'Use this token to reset your password.',
-        ], 'Reset token generated.');
+        ]);
+
+        Mail::to($user->email)->queue(new PasswordResetMail(
+            recipientName: $user->name,
+            resetUrl: $resetUrl,
+            token: $token,
+            expiresInMinutes: 60,
+        ));
+
+        return $this->success(null, $genericMessage);
     }
 
     public function resetPassword(Request $request)

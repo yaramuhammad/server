@@ -122,7 +122,8 @@ Route::prefix('portal')->group(function () {
 // Participant API (public)
 Route::middleware('throttle:participate')->prefix('participate')->group(function () {
     Route::get('{token}', [ParticipationController::class, 'showLink']);
-    Route::post('{token}/verify-password', [ParticipationController::class, 'verifyPassword']);
+    Route::post('{token}/verify-password', [ParticipationController::class, 'verifyPassword'])
+        ->middleware('throttle:link-password');
     Route::post('{token}/register', [ParticipationController::class, 'register']);
 
     Route::prefix('session/{participant:uuid}')->withoutScopedBindings()->group(function () {

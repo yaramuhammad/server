@@ -40,6 +40,12 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(30)->by($request->ip())
         );
 
+        // Tighter limit specifically for assessment-link password attempts,
+        // keyed by link token + IP to slow brute-forcing a weak link password.
+        RateLimiter::for('link-password', fn (Request $request) =>
+            Limit::perMinute(6)->by(($request->route('token') ?? 'unknown') . '|' . $request->ip())
+        );
+
         // Blade directive for Arabic text shaping in PDFs
         Blade::directive('ar', function ($expression) {
             return "<?php echo app(\App\Services\ArabicTextService::class)->shape({$expression}); ?>";
