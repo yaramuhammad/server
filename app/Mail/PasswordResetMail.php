@@ -20,7 +20,6 @@ class PasswordResetMail extends Mailable implements ShouldQueue
     public function __construct(
         public string $recipientName,
         public string $resetUrl,
-        public string $token,
         public int $expiresInMinutes = 60,
     ) {}
 
@@ -38,7 +37,6 @@ class PasswordResetMail extends Mailable implements ShouldQueue
             with: [
                 'recipientName' => $this->recipientName,
                 'resetUrl' => $this->resetUrl,
-                'token' => $this->token,
                 'expiresInMinutes' => $this->expiresInMinutes,
             ],
         );

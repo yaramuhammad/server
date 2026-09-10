@@ -222,7 +222,6 @@ class ParticipantPortalController extends Controller
         Mail::to($account->email)->queue(new PasswordResetMail(
             recipientName: $account->name,
             resetUrl: $resetUrl,
-            token: $token,
             expiresInMinutes: 60,
         ));
 

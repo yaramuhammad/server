@@ -50,7 +50,6 @@ class PasswordResetController extends Controller
         Mail::to($user->email)->queue(new PasswordResetMail(
             recipientName: $user->name,
             resetUrl: $resetUrl,
-            token: $token,
             expiresInMinutes: 60,
         ));
 

@@ -27,11 +27,6 @@
         <span style="word-break:break-all;">{{ $resetUrl }}</span>
     </p>
 
-    <p style="font-size:13px; color:#475569;">
-        If you need to enter the reset code manually, it is:<br>
-        <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">{{ $token }}</code>
-    </p>
-
     <hr style="margin:20px 0; border:none; border-top:1px solid #e2e8f0;">
 
     <p style="font-size:13px; color:#475569;">
