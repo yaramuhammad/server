@@ -18,6 +18,7 @@ use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Support\ParticipantSessionToken;
 use App\Traits\ApiResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class ParticipationController extends Controller
@@ -79,26 +80,33 @@ class ParticipationController extends Controller
     {
         $link = AssessmentLink::where('token', $token)->firstOrFail();
 
-        if (!$link->isAccessible()) {
-            return $this->error('This assessment link is no longer accessible.', 403);
-        }
+        // Serialize registrations on this link so a burst of concurrent
+        // signups near max_participants can't all pass the count check
+        // before any insert lands, overshooting the configured cap.
+        $lock = Cache::lock("register-participant:{$link->id}", 10);
 
-        $participant = Participant::create([
-            'assessment_link_id' => $link->id,
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'company' => $request->company,
-            'job_title' => $request->job_title,
-            'age' => $request->age,
-            'gender' => $request->gender,
-            'custom_data' => $request->custom_data,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'locale' => app()->getLocale(),
-        ]);
+        return $lock->block(5, function () use ($link, $request) {
+            if (!$link->isAccessible()) {
+                return $this->error('This assessment link is no longer accessible.', 403);
+            }
 
-        return $this->success(new ParticipantResource($participant), 'Registered successfully.', 201);
+            $participant = Participant::create([
+                'assessment_link_id' => $link->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'company' => $request->company,
+                'job_title' => $request->job_title,
+                'age' => $request->age,
+                'gender' => $request->gender,
+                'custom_data' => $request->custom_data,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'locale' => app()->getLocale(),
+            ]);
+
+            return $this->success(new ParticipantResource($participant), 'Registered successfully.', 201);
+        });
     }
 
     /**
@@ -163,69 +171,76 @@ class ParticipationController extends Controller
             return $this->error('This test is not part of the assessment.', 404);
         }
 
-        // Check for existing attempt (only current round — after latest retake grant)
-        $existingAttempt = $participant->currentAttempts($assessment->id)
-            ->where('test_id', $test->id)
-            ->first();
+        // Serialize concurrent start-test requests for this participant+test so
+        // a double-click / retry can't race the check-then-create below into
+        // creating two in-progress attempts.
+        $lock = Cache::lock("start-test:{$participant->id}:{$test->id}", 10);
 
-        if ($existingAttempt) {
-            if ($existingAttempt->isCompleted()) {
-                return $this->error('You have already completed this test.', 409);
-            }
+        return $lock->block(5, function () use ($participant, $assessment, $link, $test) {
+            // Check for existing attempt (only current round — after latest retake grant)
+            $existingAttempt = $participant->currentAttempts($assessment->id)
+                ->where('test_id', $test->id)
+                ->first();
 
-            // Check timeout
-            if ($existingAttempt->isTimedOut()) {
-                $existingAttempt->update([
-                    'status' => 'completed',
-                    'completed_at' => now(),
+            if ($existingAttempt) {
+                if ($existingAttempt->isCompleted()) {
+                    return $this->error('You have already completed this test.', 409);
+                }
+
+                // Check timeout
+                if ($existingAttempt->isTimedOut()) {
+                    $existingAttempt->update([
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                    ]);
+                    $existingAttempt->calculateScores();
+
+                    return $this->error('Time has expired for this test.', 410);
+                }
+
+                // Return existing in-progress attempt with saved responses
+                $test->load('questions');
+
+                $savedResponses = $existingAttempt->responses()
+                    ->select('question_id', 'value')
+                    ->get()
+                    ->map(fn ($r) => ['question_id' => $r->question_id, 'value' => $r->value]);
+
+                return $this->success([
+                    'attempt' => new TestAttemptResource($existingAttempt),
+                    'questions' => QuestionResource::collection(
+                        $test->randomize_questions ? $test->questions->shuffle() : $test->questions
+                    ),
+                    'remaining_seconds' => $existingAttempt->getRemainingSeconds(),
+                    'saved_responses' => $savedResponses,
+                    'scale_config' => $this->resolveScaleConfig($test->scale_config),
+                    'instructions' => $test->getTranslation('instructions'),
                 ]);
-                $existingAttempt->calculateScores();
-
-                return $this->error('Time has expired for this test.', 410);
             }
 
-            // Return existing in-progress attempt with saved responses
+            // Create new attempt
+            $attempt = TestAttempt::create([
+                'participant_id' => $participant->id,
+                'test_id' => $test->id,
+                'assessment_id' => $assessment->id,
+                'assessment_link_id' => $link->id,
+                'status' => 'in_progress',
+                'started_at' => now(),
+            ]);
+
             $test->load('questions');
 
-            $savedResponses = $existingAttempt->responses()
-                ->select('question_id', 'value')
-                ->get()
-                ->map(fn ($r) => ['question_id' => $r->question_id, 'value' => $r->value]);
-
             return $this->success([
-                'attempt' => new TestAttemptResource($existingAttempt),
+                'attempt' => new TestAttemptResource($attempt),
                 'questions' => QuestionResource::collection(
                     $test->randomize_questions ? $test->questions->shuffle() : $test->questions
                 ),
-                'remaining_seconds' => $existingAttempt->getRemainingSeconds(),
-                'saved_responses' => $savedResponses,
+                'remaining_seconds' => $attempt->getRemainingSeconds(),
+                'saved_responses' => [],
                 'scale_config' => $this->resolveScaleConfig($test->scale_config),
                 'instructions' => $test->getTranslation('instructions'),
-            ]);
-        }
-
-        // Create new attempt
-        $attempt = TestAttempt::create([
-            'participant_id' => $participant->id,
-            'test_id' => $test->id,
-            'assessment_id' => $assessment->id,
-            'assessment_link_id' => $link->id,
-            'status' => 'in_progress',
-            'started_at' => now(),
-        ]);
-
-        $test->load('questions');
-
-        return $this->success([
-            'attempt' => new TestAttemptResource($attempt),
-            'questions' => QuestionResource::collection(
-                $test->randomize_questions ? $test->questions->shuffle() : $test->questions
-            ),
-            'remaining_seconds' => $attempt->getRemainingSeconds(),
-            'saved_responses' => [],
-            'scale_config' => $this->resolveScaleConfig($test->scale_config),
-            'instructions' => $test->getTranslation('instructions'),
-        ], 'Test started.', 201);
+            ], 'Test started.', 201);
+        });
     }
 
     /**
