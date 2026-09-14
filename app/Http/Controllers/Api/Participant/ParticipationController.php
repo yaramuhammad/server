@@ -228,6 +228,15 @@ class ParticipationController extends Controller
                 'started_at' => now(),
             ]);
 
+            // Starting the first attempt of a new round is what "using" a
+            // retake grant means — mark it so admin retake history reflects
+            // that the participant actually came back, not just that a
+            // grant was issued.
+            $latestGrant = $participant->latestRetakeGrant($assessment->id);
+            if ($latestGrant && !$latestGrant->isUsed()) {
+                $latestGrant->update(['used_at' => now()]);
+            }
+
             $test->load('questions');
 
             return $this->success([
