@@ -49,7 +49,16 @@ class Question extends Model
 
     public function getEffectiveScaleConfig(): array
     {
-        return $this->scale_override ?? $this->test->scale_config;
+        $override = $this->scale_override;
+
+        // An override missing min/max (bad legacy data, or a partial override
+        // that only sets labels/score_map) can't stand on its own — fall back
+        // to the test's scale instead of scoring against an incomplete range.
+        if ($override && isset($override['min'], $override['max'])) {
+            return $override;
+        }
+
+        return $this->test->scale_config ?? ['min' => 1, 'max' => 5];
     }
 
     public function calculateScoredValue(int $rawValue): int

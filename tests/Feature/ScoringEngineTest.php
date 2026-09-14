@@ -241,3 +241,34 @@ it('uses scale_config.score_map to map raw answers to scored values', function (
 
     expect($result['summary']['score_raw'])->toBe(4);
 });
+
+it('does not crash when a test has an empty scale_config', function () {
+    // scale_config is NOT NULL at the DB level, but nothing stops it being
+    // an empty array — StoreTestRequest requires min/max on create, but a
+    // row from before that validation existed could still look like this.
+    $attempt = makeAttempt(
+        ['scoring_type' => 'simple', 'scale_config' => []],
+        [[], []],
+        [0 => 3, 1 => 2],
+    );
+
+    $result = app(ScoringEngine::class)->calculate($attempt);
+
+    expect($result['summary']['score_raw'])->toBe(5);
+});
+
+it('falls back to the test scale when a question scale_override is missing min/max', function () {
+    $attempt = makeAttempt(
+        ['scoring_type' => 'simple', 'scale_config' => ['min' => 1, 'max' => 5]],
+        [
+            ['is_reverse_scored' => true, 'scale_override' => ['labels' => ['1' => 'Never', '5' => 'Always']]],
+        ],
+        [0 => 2],
+    );
+
+    // Reverse-scored against the test's 1..5 scale: (5 + 1) - 2 = 4.
+    // Without the fallback this throws instead of scoring at all.
+    $result = app(ScoringEngine::class)->calculate($attempt);
+
+    expect($result['summary']['score_raw'])->toBe(4);
+});

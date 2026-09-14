@@ -31,7 +31,7 @@ class ScoringEngine
      */
     private function calculateSimple($test, Collection $responses): array
     {
-        $scaleConfig = $test->scale_config;
+        $scaleConfig = $test->scale_config ?? [];
         $requiredCount = $test->questions()->where('is_required', true)->count();
         $scaleMax = $scaleConfig['max'] ?? 5;
 
@@ -66,7 +66,7 @@ class ScoringEngine
     private function calculateCategory($test, Collection $responses, array $config): array
     {
         $categoryDefs = collect($config['categories'] ?? []);
-        $scaleConfig = $test->scale_config;
+        $scaleConfig = $test->scale_config ?? [];
         $scaleMax = $scaleConfig['max'] ?? 5;
         $scaleMin = $scaleConfig['min'] ?? 1;
 
@@ -177,7 +177,7 @@ class ScoringEngine
      */
     private function calculateWeighted($test, Collection $responses, array $config): array
     {
-        $scaleConfig = $test->scale_config;
+        $scaleConfig = $test->scale_config ?? [];
         $scaleMax = $scaleConfig['max'] ?? 5;
 
         $weightedRaw = 0;
