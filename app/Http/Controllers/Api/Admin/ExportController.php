@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Assessment;
 use App\Models\AssessmentLink;
 use App\Models\Participant;
+use App\Models\ParticipantAccount;
 use App\Models\TestAttempt;
 use Illuminate\Http\Request;
 use App\Services\CsvExportService;
@@ -151,11 +152,15 @@ class ExportController extends Controller
 
     public function participantProfilePdf(Participant $participant)
     {
+        $this->authorize('view', $participant);
+
         return $this->pdfExportService->participantReport($participant);
     }
 
     public function participantCombinedPdf(Request $request)
     {
+        $this->authorize('viewAny', ParticipantAccount::class);
+
         $request->validate(['email' => 'required|email']);
 
         return $this->pdfExportService->participantCombinedReportByEmail($request->input('email'));
