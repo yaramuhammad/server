@@ -17,6 +17,8 @@ class ParticipantManagementController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', ParticipantAccount::class);
+
         $query = ParticipantAccount::query();
 
         if ($search = $request->input('search')) {
@@ -97,6 +99,8 @@ class ParticipantManagementController extends Controller
 
     public function show(ParticipantAccount $participantAccount)
     {
+        $this->authorize('view', $participantAccount);
+
         $participants = $participantAccount->participants()
             ->with(['assessmentLink.assessment.tests', 'attempts.test'])
             ->get();
@@ -175,6 +179,8 @@ class ParticipantManagementController extends Controller
 
     public function grantRetake(Request $request, ParticipantAccount $participantAccount)
     {
+        $this->authorize('update', $participantAccount);
+
         $request->validate([
             'participant_uuid' => ['required', 'string'],
             'reason' => ['nullable', 'string', 'max:500'],
@@ -202,6 +208,8 @@ class ParticipantManagementController extends Controller
 
     public function retakeHistory(ParticipantAccount $participantAccount)
     {
+        $this->authorize('view', $participantAccount);
+
         $participantIds = $participantAccount->participants()->pluck('id');
 
         $grants = RetakeGrant::whereIn('participant_id', $participantIds)
@@ -222,6 +230,8 @@ class ParticipantManagementController extends Controller
 
     public function combinedResults(ParticipantAccount $participantAccount)
     {
+        $this->authorize('view', $participantAccount);
+
         $participants = $participantAccount->participants()
             ->with(['assessmentLink.assessment', 'attempts' => fn ($q) => $q->completed()->with('test')])
             ->get();
@@ -252,6 +262,8 @@ class ParticipantManagementController extends Controller
 
     public function downloadProfile(PdfExportService $pdfExportService, ParticipantAccount $participantAccount)
     {
+        $this->authorize('view', $participantAccount);
+
         return $pdfExportService->participantCombinedReport($participantAccount);
     }
 
@@ -262,6 +274,8 @@ class ParticipantManagementController extends Controller
      */
     public function destroy(Participant $participant)
     {
+        $this->authorize('delete', $participant);
+
         $participant->delete();
 
         return $this->success(['message' => 'Participant deleted.']);
@@ -273,6 +287,8 @@ class ParticipantManagementController extends Controller
      */
     public function destroyAccount(ParticipantAccount $participantAccount)
     {
+        $this->authorize('delete', $participantAccount);
+
         // Delete each linked Participant so its attempts/responses cascade.
         // The FK on participants.participant_account_id is null-on-delete, so
         // we must do this explicitly instead of relying on the account delete.
