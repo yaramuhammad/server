@@ -26,11 +26,12 @@ class AuthController extends Controller
             return $this->error('Your account has been deactivated.', 403);
         }
 
-        // Revoke existing tokens to enforce single active session
-        $user->tokens()->where('name', 'api-token')->delete();
-
+        // Each login gets its own token; multiple devices/tabs can stay
+        // signed in concurrently without logging each other out. Tokens are
+        // named per-login so a device can find (and later revoke) just its
+        // own without touching anyone else's session.
         $abilities = $user->isSuperAdmin() ? ['*'] : ['admin'];
-        $token = $user->createToken('api-token', $abilities)->plainTextToken;
+        $token = $user->createToken('api-token:' . now()->timestamp, $abilities)->plainTextToken;
 
         return $this->success([
             'user' => new UserResource($user),
