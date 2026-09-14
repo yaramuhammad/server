@@ -30,6 +30,10 @@ class AssessmentLinkResource extends JsonResource
             'welcome_message' => $request->has('bilingual') ? $this->getTranslations('welcome_message') : $this->getTranslation('welcome_message'),
             'completion_message' => $request->has('bilingual') ? $this->getTranslations('completion_message') : $this->getTranslation('completion_message'),
             'participants_count' => $this->whenCounted('participants'),
+            'completed_participants_count' => $this->when(
+                isset($this->completed_participants_count),
+                $this->completed_participants_count
+            ),
             'is_accessible' => $this->isAccessible(),
             'created_at' => $this->created_at?->toISOString(),
         ];

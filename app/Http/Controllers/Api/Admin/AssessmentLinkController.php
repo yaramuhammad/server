@@ -8,8 +8,10 @@ use App\Http\Requests\Api\Admin\UpdateAssessmentLinkRequest;
 use App\Http\Resources\AssessmentLinkResource;
 use App\Models\Assessment;
 use App\Models\AssessmentLink;
+use App\Models\TestAttempt;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AssessmentLinkController extends Controller
 {
@@ -26,6 +28,30 @@ class AssessmentLinkController extends Controller
         }
 
         $links = $query->latest()->get();
+
+        // A participant has "completed" a link's assessment once they have a
+        // completed attempt for every test on the assessment. Computed here,
+        // once, for all links at once — instead of the previous approach of
+        // the client fetching every link's full participant+attempt list
+        // just to derive this count (an O(links) fetch waterfall).
+        $testCount = $assessment->tests()->count();
+        $completedCounts = [];
+
+        if ($testCount > 0 && $links->isNotEmpty()) {
+            $completedCounts = TestAttempt::query()
+                ->whereIn('assessment_link_id', $links->pluck('id'))
+                ->where('status', 'completed')
+                ->select('assessment_link_id', 'participant_id')
+                ->groupBy('assessment_link_id', 'participant_id')
+                ->havingRaw('COUNT(*) >= ?', [$testCount])
+                ->get()
+                ->groupBy('assessment_link_id')
+                ->map(fn ($rows) => $rows->count());
+        }
+
+        $links->each(function (AssessmentLink $link) use ($completedCounts) {
+            $link->completed_participants_count = $completedCounts->get($link->id, 0);
+        });
 
         return $this->success(AssessmentLinkResource::collection($links));
     }
