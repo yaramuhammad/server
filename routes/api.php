@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\AssessmentLinkController;
 use App\Http\Controllers\Api\Admin\ResultController;
 use App\Http\Controllers\Api\Admin\ExportController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Admin\ContactMessageController;
 use App\Http\Controllers\Api\Admin\ProfileController;
 use App\Http\Controllers\Api\Admin\ParticipantManagementController;
 use App\Http\Controllers\Api\HealthController;
@@ -71,6 +72,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('admin')->group(func
     Route::apiResource('users', UserController::class)
         ->parameters(['users' => 'user:uuid']);
     Route::post('users/{user:uuid}/reset-password', [UserController::class, 'resetPassword']);
+
+    Route::apiResource('contact-messages', ContactMessageController::class)
+        ->only(['index', 'show', 'destroy'])
+        ->parameters(['contact-messages' => 'contactMessage:uuid']);
 
     Route::get('assessments/{assessment:uuid}/export/summary', [ExportController::class, 'assessmentSummary']);
     Route::get('assessments/{assessment:uuid}/export/detailed', [ExportController::class, 'assessmentDetailed']);
