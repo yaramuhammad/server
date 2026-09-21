@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ContactMessageMail;
+use App\Models\ContactMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -20,21 +21,19 @@ class ContactController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
+        ContactMessage::create($data);
+
         $adminEmail = config('mail.admin_address');
 
-        if (!$adminEmail) {
-            return response()->json([
-                'message' => 'Admin email is not configured.',
-            ], 500);
+        if ($adminEmail) {
+            Mail::to($adminEmail)->queue(new ContactMessageMail(
+                senderName: $data['name'],
+                senderEmail: $data['email'],
+                senderPhone: $data['phone'] ?? null,
+                senderSubject: $data['subject'] ?? null,
+                messageBody: $data['message'],
+            ));
         }
-
-        Mail::to($adminEmail)->queue(new ContactMessageMail(
-            senderName: $data['name'],
-            senderEmail: $data['email'],
-            senderPhone: $data['phone'] ?? null,
-            senderSubject: $data['subject'] ?? null,
-            messageBody: $data['message'],
-        ));
 
         return response()->json([
             'message' => 'Your message has been sent successfully.',
