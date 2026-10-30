@@ -31,7 +31,6 @@ it('walks a participant through register, start, answer, complete, and view resu
         'user_id' => $admin->id,
         'title' => ['en' => 'Assessment', 'ar' => 'تقييم'],
         'status' => 'published',
-        'show_results_to_participant' => true,
     ]);
     $assessment->tests()->attach($test->id, ['sort_order' => 0]);
 
@@ -39,6 +38,7 @@ it('walks a participant through register, start, answer, complete, and view resu
         'assessment_id' => $assessment->id,
         'created_by' => $admin->id,
         'is_active' => true,
+        'allow_profile_view' => true,
     ]);
 
     // 1. Register (only collect_name is on by default).

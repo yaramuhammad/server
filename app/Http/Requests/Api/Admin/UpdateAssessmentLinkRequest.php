@@ -27,6 +27,8 @@ class UpdateAssessmentLinkRequest extends FormRequest
             'collect_job_title' => ['sometimes', 'boolean'],
             'collect_age' => ['sometimes', 'boolean'],
             'collect_gender' => ['sometimes', 'boolean'],
+            'allow_profile_view' => ['sometimes', 'boolean'],
+            'allow_profile_download' => ['sometimes', 'boolean'],
             'custom_fields' => ['nullable', 'array'],
             'welcome_message' => ['nullable', 'array'],
             'welcome_message.en' => ['nullable', 'string'],

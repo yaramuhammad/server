@@ -306,6 +306,8 @@ class StudentAbilitiesSeeder extends Seeder
             'collect_job_title' => false,
             'collect_age' => true,
             'collect_gender' => true,
+            'allow_profile_view' => true,
+            'allow_profile_download' => true,
             'welcome_message' => [
                 'en' => 'Welcome. This assessment includes eight tests about your abilities, academic achievement and readiness to study abroad. It is long (about two and a half hours in total) and each test is submitted separately. Please answer carefully and honestly.',
                 'ar' => 'مرحبًا بك. يتضمن هذا التقييم ثمانية اختبارات حول قدراتك وتحصيلك الدراسي وجاهزيتك للدراسة في الخارج. التقييم طويل (نحو ساعتين ونصف إجمالًا)، ويُسلَّم كل اختبار على حدة. يرجى الإجابة بتركيز وصدق.',

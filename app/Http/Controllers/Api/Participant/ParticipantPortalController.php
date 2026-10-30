@@ -98,13 +98,15 @@ class ParticipantPortalController extends Controller
             $assessment = $link->assessment;
             $attempts = $participant->attempts;
 
-            $testsStatus = $assessment->tests->map(function ($test) use ($attempts) {
+            $canView = (bool) $link->allow_profile_view;
+
+            $testsStatus = $assessment->tests->map(function ($test) use ($attempts, $canView) {
                 $attempt = $attempts->firstWhere('test_id', $test->id);
                 return [
                     'test_id' => $test->uuid,
                     'test_title' => $test->getTranslation('title'),
                     'status' => $attempt ? $attempt->status : 'not_started',
-                    'score_percentage' => $attempt?->score_percentage,
+                    'score_percentage' => $canView ? $attempt?->score_percentage : null,
                 ];
             });
 
@@ -119,6 +121,8 @@ class ParticipantPortalController extends Controller
                 'all_completed' => $allCompleted,
                 'total_tests' => $testsStatus->count(),
                 'completed_tests' => $testsStatus->where('status', 'completed')->count(),
+                'can_view_results' => $canView,
+                'can_download_profile' => (bool) $link->allow_profile_download,
             ];
         })->filter()->values();
 
@@ -179,7 +183,7 @@ class ParticipantPortalController extends Controller
 
         $results = $participants->map(function ($participant) {
             $link = $participant->assessmentLink;
-            if (!$link || !$link->assessment) return null;
+            if (!$link || !$link->assessment || !$link->allow_profile_view) return null;
 
             return [
                 'assessment_title' => $link->assessment->getTranslation('title'),
@@ -266,7 +270,13 @@ class ParticipantPortalController extends Controller
     {
         $account = $request->user('participant');
 
-        return $pdfExportService->participantCombinedReport($account);
+        $allowed = fn ($participant) => (bool) $participant->assessmentLink?->allow_profile_download;
+
+        if (! $account->participants()->with('assessmentLink')->get()->contains($allowed)) {
+            return $this->error('Downloading the profile is not available for your assessments.', 403);
+        }
+
+        return $pdfExportService->participantCombinedReport($account, $allowed);
     }
 
     private function formatAccount(ParticipantAccount $account): array

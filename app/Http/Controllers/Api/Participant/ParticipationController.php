@@ -16,6 +16,7 @@ use App\Models\Participant;
 use App\Models\Response;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Services\PdfExportService;
 use App\Support\ParticipantSessionToken;
 use App\Traits\ApiResponse;
 use Illuminate\Support\Facades\Cache;
@@ -158,6 +159,8 @@ class ParticipationController extends Controller
             'assessment_title' => $assessment->getTranslation('title'),
             'tests' => $testsStatus,
             'all_completed' => $allCompleted,
+            'can_view_results' => (bool) $link->allow_profile_view,
+            'can_download_profile' => (bool) $link->allow_profile_download,
         ]);
     }
 
@@ -323,7 +326,7 @@ class ParticipationController extends Controller
         $link = $participant->assessmentLink()->with('assessment')->firstOrFail();
         $assessment = $link->assessment;
 
-        if (!$assessment->show_results_to_participant) {
+        if (! $link->allow_profile_view) {
             return $this->error('Results are not available for this assessment.', 403);
         }
 
@@ -337,5 +340,14 @@ class ParticipationController extends Controller
             'completion_message' => $link->getTranslation('completion_message'),
             'results' => TestAttemptResource::collection($attempts),
         ]);
+    }
+
+    public function downloadProfile(Participant $participant, PdfExportService $pdfExportService)
+    {
+        if (! $participant->assessmentLink?->allow_profile_download) {
+            return $this->error('Downloading the profile is not available for this assessment.', 403);
+        }
+
+        return $pdfExportService->participantReport($participant);
     }
 }
