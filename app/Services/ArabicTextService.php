@@ -34,6 +34,12 @@ class ArabicTextService
             return $this->cache[$text] = $text;
         }
 
-        return $this->cache[$text] = $this->arabic->utf8Glyphs($text);
+        $shaped = $this->arabic->utf8Glyphs($text);
+
+        // ArPHP mis-mirrors a Latin parenthetical that ends the text: "التفكير اللفظي (VR)"
+        // comes out as "VR)) ..." instead of "(VR) ...". Restore the bracket pair.
+        $shaped = preg_replace('/(?<![A-Za-z0-9(])([A-Za-z0-9][A-Za-z0-9 &.\/-]*)\)\)/u', '($1)', $shaped);
+
+        return $this->cache[$text] = $shaped;
     }
 }

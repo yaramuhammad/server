@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'participant.session' => \App\Http\Middleware\VerifyParticipantSession::class,
         ]);
+
+        // This is an API-only app with no "login" web route. Without this,
+        // an unauthenticated request that doesn't send Accept: application/json
+        // makes the default Authenticate middleware try to redirect to a
+        // named "login" route that doesn't exist, throwing a 500 instead of
+        // the clean 401 the AuthenticationException renderable below returns.
+        Authenticate::redirectUsing(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (ModelNotFoundException $e, Request $request) {

@@ -91,13 +91,19 @@
                 @php
                     $chartType = $attempt->test->chart_type ?? 'bar';
 
-                    // Resolve the overall band by matching the attempt's percentage
+                    // Prefer the test's own overall interpretation (scoring_config.ranges).
+                    // Otherwise resolve the overall band by matching the attempt's percentage
                     // against the first category's interpretation thresholds.
                     // Tests where every category shares the same bands (e.g. RTBQ-20)
                     // can therefore display a single overall label.
                     $overallBandLabel = null;
+                    $overallBandDesc = null;
                     $firstCatConfig = $attempt->test->scoring_config['categories'][0] ?? null;
-                    if ($firstCatConfig && !empty($firstCatConfig['interpretation'])) {
+                    if (!empty($details['matched_range'])) {
+                        $pick = fn ($v) => is_array($v) ? ($v[$lang] ?? $v['en'] ?? null) : $v;
+                        $overallBandLabel = $pick($details['matched_range']['label'] ?? null);
+                        $overallBandDesc = $pick($details['matched_range']['description'] ?? null);
+                    } elseif ($firstCatConfig && !empty($firstCatConfig['interpretation'])) {
                         foreach ($firstCatConfig['interpretation'] as $band) {
                             if ($attempt->score_percentage >= $band['min'] && $attempt->score_percentage <= $band['max']) {
                                 $rawLabel = $band['label'] ?? null;
@@ -111,6 +117,9 @@
                 @if($overallBandLabel)
                     <div class="range-indicator">
                         <div class="range-label">{{ $s($overallBandLabel) }}</div>
+                        @if($overallBandDesc)
+                            <div class="range-description">{!! nl2br(e($s($overallBandDesc))) !!}</div>
+                        @endif
                         <div style="font-size: 9px; color: #888; margin-top: 4px;">
                             {{ $s($isAr ? 'النتيجة الإجمالية' : 'Overall Result') }}: {{ $attempt->score_percentage }}%
                         </div>
@@ -129,6 +138,8 @@
                     @include('reports.partials.line-chart', ['categories' => $details['categories'], 'locale' => $lang])
                 @elseif($chartType === 'doughnut')
                     @include('reports.partials.doughnut-chart', ['categories' => $details['categories'], 'locale' => $lang])
+                @elseif($chartType === 'radar')
+                    @include('reports.partials.radar-chart', ['categories' => $details['categories'], 'locale' => $lang])
                 @else
                     {{-- Default: bar chart (CSS progress bars) --}}
                     @foreach($details['categories'] as $cat)
@@ -187,7 +198,7 @@
                 <div class="range-indicator">
                     <div class="range-label">{{ $s($rangeLabel) }}</div>
                     @if($rangeDesc)
-                        <div class="range-description">{{ $s($rangeDesc) }}</div>
+                        <div class="range-description">{!! nl2br(e($s($rangeDesc))) !!}</div>
                     @endif
                     <div style="font-size: 9px; color: #888; margin-top: 4px;">
                         {{ $s($isAr ? 'المدى' : 'Range') }}: {{ $details['matched_range']['min'] }} - {{ $details['matched_range']['max'] }}

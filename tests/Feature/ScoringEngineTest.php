@@ -173,6 +173,46 @@ it('groups category scoring by question category_key and picks an interpretation
         ->and($result['summary']['score_max'])->toBe(15);
 });
 
+it('adds an overall interpretation of the raw total to category scoring when ranges are set', function () {
+    $band = [['min' => 0, 'max' => 100, 'label' => ['en' => 'Any', 'ar' => 'أي']]];
+    $config = [
+        'categories' => [
+            ['key' => 'a', 'label' => ['en' => 'A', 'ar' => 'أ'], 'interpretation' => $band],
+            ['key' => 'b', 'label' => ['en' => 'B', 'ar' => 'ب'], 'interpretation' => $band],
+        ],
+        'use_percentage' => false,
+        'ranges' => [
+            ['min' => 0, 'max' => 11, 'label' => ['en' => 'Low', 'ar' => 'منخفض']],
+            ['min' => 12, 'max' => 20, 'label' => ['en' => 'High', 'ar' => 'مرتفع']],
+        ],
+    ];
+
+    $attempt = makeAttempt(
+        ['scoring_type' => 'category', 'scoring_config' => $config, 'scale_config' => ['min' => 1, 'max' => 5]],
+        [['category_key' => 'a'], ['category_key' => 'a'], ['category_key' => 'b'], ['category_key' => 'b']],
+        [0 => 3, 1 => 3, 2 => 3, 3 => 3], // raw total 12 (60%) => High on the raw scale
+    );
+
+    $result = app(ScoringEngine::class)->calculate($attempt);
+
+    expect($result['details']['type'])->toBe('category')
+        ->and($result['details']['categories'])->toHaveCount(2)
+        ->and($result['details']['matched_range']['label']['en'])->toBe('High')
+        ->and($result['details']['all_ranges'])->toHaveCount(2);
+});
+
+it('leaves category scoring without an overall interpretation when no ranges are set', function () {
+    $attempt = makeAttempt(
+        ['scoring_type' => 'category', 'scoring_config' => ['categories' => [['key' => 'a', 'label' => ['en' => 'A', 'ar' => 'أ']]]]],
+        [['category_key' => 'a']],
+        [0 => 4],
+    );
+
+    $result = app(ScoringEngine::class)->calculate($attempt);
+
+    expect($result['details'])->not->toHaveKey('matched_range');
+});
+
 it('maps a range test total to the matching named range', function () {
     $config = [
         'use_percentage' => true,
