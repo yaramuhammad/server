@@ -117,6 +117,18 @@ class ScoringEngine
 
         $totalPercentage = $totalMax > 0 ? round(($totalRaw / $totalMax) * 100, 2) : 0;
 
+        $details = [
+            'type' => 'category',
+            'categories' => $categories,
+        ];
+
+        // Optional overall interpretation of the total, using the same
+        // `ranges` / `use_percentage` keys as range scoring.
+        if (! empty($config['ranges'])) {
+            $usePercentage = $config['use_percentage'] ?? true;
+            $details += $this->matchRange($config['ranges'], $usePercentage ? $totalPercentage : $totalRaw);
+        }
+
         return [
             'summary' => [
                 'score_raw' => $totalRaw,
@@ -124,10 +136,7 @@ class ScoringEngine
                 'score_percentage' => $totalPercentage,
                 'score_average' => $responses->count() > 0 ? round($responses->avg('scored_value'), 2) : 0,
             ],
-            'details' => [
-                'type' => 'category',
-                'categories' => $categories,
-            ],
+            'details' => $details,
         ];
     }
 
@@ -144,30 +153,37 @@ class ScoringEngine
         $usePercentage = $config['use_percentage'] ?? true;
         $compareValue = $usePercentage ? $percentage : $simple['summary']['score_raw'];
 
+        return [
+            'summary' => $simple['summary'],
+            'details' => ['type' => 'range'] + $this->matchRange($config['ranges'] ?? [], $compareValue),
+        ];
+    }
+
+    /**
+     * Find the range containing $value; returns the `matched_range` / `all_ranges` detail keys.
+     */
+    private function matchRange(array $ranges, float|int $value): array
+    {
         $matchedRange = null;
-        foreach ($config['ranges'] ?? [] as $range) {
-            if ($compareValue >= $range['min'] && $compareValue <= $range['max']) {
+        foreach ($ranges as $range) {
+            if ($value >= $range['min'] && $value <= $range['max']) {
                 $matchedRange = $range;
                 break;
             }
         }
 
         return [
-            'summary' => $simple['summary'],
-            'details' => [
-                'type' => 'range',
-                'matched_range' => $matchedRange ? [
-                    'label' => $matchedRange['label'] ?? null,
-                    'description' => $matchedRange['description'] ?? null,
-                    'min' => $matchedRange['min'],
-                    'max' => $matchedRange['max'],
-                ] : null,
-                'all_ranges' => array_map(fn ($r) => [
-                    'label' => $r['label'] ?? null,
-                    'min' => $r['min'],
-                    'max' => $r['max'],
-                ], $config['ranges'] ?? []),
-            ],
+            'matched_range' => $matchedRange ? [
+                'label' => $matchedRange['label'] ?? null,
+                'description' => $matchedRange['description'] ?? null,
+                'min' => $matchedRange['min'],
+                'max' => $matchedRange['max'],
+            ] : null,
+            'all_ranges' => array_map(fn ($r) => [
+                'label' => $r['label'] ?? null,
+                'min' => $r['min'],
+                'max' => $r['max'],
+            ], $ranges),
         ];
     }
 
