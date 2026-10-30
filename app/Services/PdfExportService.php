@@ -90,7 +90,11 @@ class PdfExportService
         return $pdf->download($filename);
     }
 
-    public function participantCombinedReport(ParticipantAccount $account)
+    /**
+     * @param  (callable(\App\Models\Participant): bool)|null  $include  limit the report to some
+     *         of the account's participations (e.g. links that allow participants to download)
+     */
+    public function participantCombinedReport(ParticipantAccount $account, ?callable $include = null)
     {
         $participants = $account->participants()
             ->with([
@@ -98,6 +102,10 @@ class PdfExportService
                 'attempts' => fn ($q) => $q->completed()->with(['test', 'responses.question']),
             ])
             ->get();
+
+        if ($include) {
+            $participants = $participants->filter($include)->values();
+        }
 
         $assessments = $participants->map(function ($p) {
             $link = $p->assessmentLink;

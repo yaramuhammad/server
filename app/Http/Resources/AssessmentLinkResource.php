@@ -26,6 +26,8 @@ class AssessmentLinkResource extends JsonResource
             'collect_job_title' => $this->collect_job_title,
             'collect_age' => $this->collect_age,
             'collect_gender' => $this->collect_gender,
+            'allow_profile_view' => $this->allow_profile_view,
+            'allow_profile_download' => $this->allow_profile_download,
             'custom_fields' => $this->custom_fields,
             'welcome_message' => $request->has('bilingual') ? $this->getTranslations('welcome_message') : $this->getTranslation('welcome_message'),
             'completion_message' => $request->has('bilingual') ? $this->getTranslations('completion_message') : $this->getTranslation('completion_message'),

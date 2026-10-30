@@ -148,5 +148,6 @@ Route::middleware('throttle:participate')->prefix('participate')->group(function
             Route::post('test/{test:uuid}/responses', [ParticipationController::class, 'submitResponses']);
             Route::post('test/{test:uuid}/complete', [ParticipationController::class, 'completeTest']);
             Route::get('results', [ParticipationController::class, 'getResults']);
+            Route::get('profile/pdf', [ParticipationController::class, 'downloadProfile']);
         });
 });
