@@ -3,6 +3,7 @@
 use App\Models\Assessment;
 use App\Models\AssessmentLink;
 use App\Models\Participant;
+use App\Models\ParticipantAccount;
 use App\Models\RetakeGrant;
 use App\Models\Test;
 use App\Models\TestAttempt;
@@ -93,4 +94,38 @@ it('does not touch an already-used retake grant when the participant resumes an 
         ->assertStatus(200);
 
     expect($grant->fresh()->used_at->timestamp)->toBe($usedAt->timestamp);
+});
+
+it('shows a granted retake as startable on the portal dashboard', function () {
+    [$participant, , $test, $assessment, $user] = seedRetakeableSession();
+
+    $account = ParticipantAccount::create(['name' => 'Acc', 'email' => 'acc@example.com', 'password' => 'secret123']);
+    $participant->update(['participant_account_id' => $account->id]);
+
+    $this->travelTo(now()->subDay(), function () use ($participant, $test, $assessment) {
+        TestAttempt::create([
+            'participant_id' => $participant->id,
+            'test_id' => $test->id,
+            'assessment_id' => $assessment->id,
+            'assessment_link_id' => $participant->assessment_link_id,
+            'status' => 'completed',
+            'started_at' => now(),
+            'completed_at' => now(),
+        ]);
+    });
+
+    $before = $this->actingAs($account, 'participant')->getJson('/api/portal/assessments')->assertOk()->json('data.0');
+    expect($before['all_completed'])->toBeTrue();
+
+    RetakeGrant::create([
+        'participant_id' => $participant->id,
+        'assessment_id' => $assessment->id,
+        'granted_by' => $user->id,
+        'granted_at' => now(),
+    ]);
+
+    $after = $this->actingAs($account, 'participant')->getJson('/api/portal/assessments')->assertOk()->json('data.0');
+    expect($after['all_completed'])->toBeFalse()
+        ->and($after['completed_tests'])->toBe(0)
+        ->and($after['tests'][0]['status'])->toBe('not_started');
 });
