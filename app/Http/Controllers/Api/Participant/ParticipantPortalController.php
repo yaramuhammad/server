@@ -88,7 +88,7 @@ class ParticipantPortalController extends Controller
         $account = $request->user('participant');
 
         $participants = $account->participants()
-            ->with(['assessmentLink.assessment.tests', 'attempts.test'])
+            ->with(['assessmentLink.assessment.tests'])
             ->get();
 
         $assessments = $participants->map(function ($participant) {
@@ -96,7 +96,10 @@ class ParticipantPortalController extends Controller
             if (!$link || !$link->assessment) return null;
 
             $assessment = $link->assessment;
-            $attempts = $participant->attempts;
+            // Only the current round (after the latest retake grant, if any),
+            // so a granted retake shows up as startable here — same view of
+            // attempts the session endpoint uses.
+            $attempts = $participant->currentAttempts($assessment->id)->get();
 
             $canView = (bool) $link->allow_profile_view;
 
