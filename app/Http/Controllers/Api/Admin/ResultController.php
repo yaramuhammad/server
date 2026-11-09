@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ParticipantResource;
 use App\Http\Resources\ResponseResource;
 use App\Http\Resources\TestAttemptResource;
+use App\Http\Resources\TestSummaryResource;
 use App\Models\Assessment;
 use App\Models\AssessmentLink;
+use App\Models\Participant;
 use App\Models\Response;
 use App\Models\TestAttempt;
 use App\Traits\ApiResponse;
@@ -46,6 +48,39 @@ class ResultController extends Controller
         return ParticipantResource::collection($participants)->additional([
             'success' => true,
             'message' => 'Success',
+        ]);
+    }
+
+    /**
+     * One participant's results within an assessment. Each test reports the
+     * newest completed attempt, so a granted retake keeps showing the previous
+     * result until the participant finishes the new round.
+     */
+    public function participantDetail(Assessment $assessment, Participant $participant)
+    {
+        $this->authorize('view', $assessment);
+
+        $attempts = $participant->attempts()
+            ->where('assessment_id', $assessment->id)
+            ->with('test')
+            ->latest()
+            ->get();
+
+        $tests = $assessment->tests->map(function ($test) use ($attempts) {
+            $testAttempts = $attempts->where('test_id', $test->id);
+            $attempt = $testAttempts->firstWhere('status', 'completed') ?? $testAttempts->first();
+
+            return [
+                'test' => new TestSummaryResource($test),
+                'status' => $attempt ? $attempt->status : 'not_started',
+                'attempt' => $attempt ? new TestAttemptResource($attempt) : null,
+            ];
+        });
+
+        return $this->success([
+            'participant' => new ParticipantResource($participant),
+            'assessment_title' => $assessment->getTranslation('title'),
+            'tests' => $tests,
         ]);
     }
 
