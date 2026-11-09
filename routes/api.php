@@ -146,6 +146,7 @@ Route::middleware('throttle:participate')->prefix('participate')->group(function
         ->middleware('participant.session')
         ->group(function () {
             Route::get('/', [ParticipationController::class, 'getSession']);
+            Route::put('study-preferences', [ParticipationController::class, 'saveStudyPreferences']);
             Route::get('test/{test:uuid}', [ParticipationController::class, 'startTest']);
             Route::post('test/{test:uuid}/responses', [ParticipationController::class, 'submitResponses']);
             Route::post('test/{test:uuid}/complete', [ParticipationController::class, 'completeTest']);

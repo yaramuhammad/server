@@ -112,6 +112,7 @@ class PdfExportService
             if (!$link || !$link->assessment) return null;
             return [
                 'assessment_title' => $link->assessment->getTranslation('title'),
+                'study_preferences' => $p->study_preferences,
                 'attempts' => $p->attempts,
             ];
         })->filter()->values();
@@ -149,6 +150,7 @@ class PdfExportService
         if ($link && $link->assessment) {
             $assessments->push([
                 'assessment_title' => $link->assessment->getTranslation('title'),
+                'study_preferences' => $participant->study_preferences,
                 'attempts' => $participant->attempts,
             ]);
         }
@@ -185,6 +187,7 @@ class PdfExportService
             if (!$link || !$link->assessment) return null;
             return [
                 'assessment_title' => $link->assessment->getTranslation('title'),
+                'study_preferences' => $p->study_preferences,
                 'attempts' => $p->attempts,
             ];
         })->filter()->values();
@@ -251,6 +254,7 @@ class PdfExportService
             if ($assessmentTitle !== null) {
                 $assessments->push([
                     'assessment_title' => $assessmentTitle,
+                    'study_preferences' => $participant->study_preferences,
                     'attempts' => $participant->attempts,
                 ]);
             }

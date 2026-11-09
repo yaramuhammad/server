@@ -19,6 +19,7 @@ class ParticipantResource extends JsonResource
             'age' => $this->age,
             'gender' => $this->gender,
             'locale' => $this->locale,
+            'study_preferences' => $this->study_preferences,
             'attempts' => TestAttemptResource::collection($this->whenLoaded('attempts')),
             'created_at' => $this->created_at?->toISOString(),
         ];

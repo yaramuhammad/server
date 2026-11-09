@@ -26,6 +26,7 @@ class AssessmentLinkResource extends JsonResource
             'collect_job_title' => $this->collect_job_title,
             'collect_age' => $this->collect_age,
             'collect_gender' => $this->collect_gender,
+            'collect_study_preferences' => $this->collect_study_preferences,
             'allow_profile_view' => $this->allow_profile_view,
             'allow_profile_download' => $this->allow_profile_download,
             'custom_fields' => $this->custom_fields,

@@ -47,6 +47,22 @@
 
         <div class="section-title">{{ $s($entry['assessment_title']) }}</div>
 
+        @if(!empty($entry['study_preferences']))
+            @php
+                $ordinals = $isAr
+                    ? ['الرغبة الأولى', 'الرغبة الثانية', 'الرغبة الثالثة', 'الرغبة الرابعة']
+                    : ['1st preference', '2nd preference', '3rd preference', '4th preference'];
+            @endphp
+            <p style="font-weight: bold; margin: 0 0 4px;">{{ $s($isAr ? 'الرغبات الدراسية (بالترتيب)' : 'Study Preferences (in order)') }}</p>
+            <table>
+                <tbody>
+                    @foreach($entry['study_preferences'] as $i => $preference)
+                        <tr><th style="width: 150px;">{{ $s($ordinals[$i] ?? (string) ($i + 1)) }}</th><td>{{ $s($preference) }}</td></tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+
         @if(count($entry['attempts']) === 0)
             <p style="color: #888; font-style: italic;">{{ $s($isAr ? 'لا توجد اختبارات مكتملة.' : 'No completed tests.') }}</p>
         @endif
