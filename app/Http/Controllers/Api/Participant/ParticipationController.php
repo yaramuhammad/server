@@ -159,9 +159,31 @@ class ParticipationController extends Controller
             'assessment_title' => $assessment->getTranslation('title'),
             'tests' => $testsStatus,
             'all_completed' => $allCompleted,
+            'collect_study_preferences' => (bool) $link->collect_study_preferences,
             'can_view_results' => (bool) $link->allow_profile_view,
             'can_download_profile' => (bool) $link->allow_profile_download,
         ]);
+    }
+
+    /**
+     * Save the participant's four study preferences, in order of preference.
+     */
+    public function saveStudyPreferences(Request $request, Participant $participant)
+    {
+        if (! $participant->assessmentLink?->collect_study_preferences) {
+            return $this->error('This assessment does not collect study preferences.', 403);
+        }
+
+        $data = $request->validate([
+            'preferences' => ['required', 'array', 'size:4'],
+            'preferences.*' => ['required', 'string', 'max:255', 'distinct:ignore_case'],
+        ]);
+
+        $participant->update([
+            'study_preferences' => array_map('trim', array_values($data['preferences'])),
+        ]);
+
+        return $this->success(new ParticipantResource($participant), 'Study preferences saved.');
     }
 
     public function startTest(Participant $participant, Test $test)

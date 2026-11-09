@@ -23,6 +23,7 @@ class Participant extends Model
         'age',
         'gender',
         'custom_data',
+        'study_preferences',
         'ip_address',
         'user_agent',
         'locale',
@@ -32,6 +33,7 @@ class Participant extends Model
     {
         return [
             'custom_data' => 'array',
+            'study_preferences' => 'array',
             'age' => 'integer',
         ];
     }

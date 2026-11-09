@@ -306,6 +306,7 @@ class StudentAbilitiesSeeder extends Seeder
             'collect_job_title' => false,
             'collect_age' => true,
             'collect_gender' => true,
+            'collect_study_preferences' => true,
             'allow_profile_view' => true,
             'allow_profile_download' => true,
             'welcome_message' => [
