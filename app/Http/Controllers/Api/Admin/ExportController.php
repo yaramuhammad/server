@@ -150,6 +150,13 @@ class ExportController extends Controller
         return $this->pdfExportService->attemptReport($attempt);
     }
 
+    public function assessmentParticipantProfilePdf(Assessment $assessment, Participant $participant)
+    {
+        $this->authorize('view', $assessment);
+
+        return $this->pdfExportService->participantReport($participant);
+    }
+
     public function participantProfilePdf(Participant $participant)
     {
         $this->authorize('view', $participant);

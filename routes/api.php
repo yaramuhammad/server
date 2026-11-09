@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('admin')->group(func
     Route::get('assessments/{assessment:uuid}/analytics', [ResultController::class, 'assessmentAnalytics']);
     Route::get('assessments/{assessment:uuid}/results', [ResultController::class, 'assessmentResults']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/results', [ResultController::class, 'linkResults']);
+    Route::get('assessments/{assessment:uuid}/participants/{participant:uuid}', [ResultController::class, 'participantDetail']);
     Route::get('attempts/{attempt:uuid}', [ResultController::class, 'attemptDetail']);
     Route::get('attempts/{attempt:uuid}/responses', [ResultController::class, 'attemptResponses']);
 
@@ -92,6 +93,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('admin')->group(func
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/summary-pdf', [ExportController::class, 'linkSummaryPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/detailed-pdf', [ExportController::class, 'linkDetailedPdf']);
     Route::get('assessments/{assessment:uuid}/links/{link:uuid}/export/profiles-zip', [ExportController::class, 'linkParticipantProfilesZip']);
+    Route::get('assessments/{assessment:uuid}/participants/{participant:uuid}/psycho-profile/pdf', [ExportController::class, 'assessmentParticipantProfilePdf']);
     Route::get('attempts/{attempt:uuid}/export/pdf', [ExportController::class, 'attemptPdf']);
     Route::get('participants/export/{participant:uuid}/psycho-profile/pdf', [ExportController::class, 'participantProfilePdf']);
     Route::delete('participants/{participant:uuid}', [ParticipantManagementController::class, 'destroy']);
