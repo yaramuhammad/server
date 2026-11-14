@@ -111,8 +111,13 @@ class ResultController extends Controller
 
         $attemptsQuery = TestAttempt::completed()->where('assessment_id', $assessment->id);
 
+        // Tests reported as their top categories (e.g. Holland) have no meaningful
+        // percentage, so they stay out of the score charts.
+        $topCategoryTestIds = $assessment->tests->filter->reportsTopCategories()->pluck('id');
+        $scoredAttemptsQuery = (clone $attemptsQuery)->whereNotIn('test_id', $topCategoryTestIds);
+
         // Score Distribution
-        $scoreBuckets = (clone $attemptsQuery)
+        $scoreBuckets = (clone $scoredAttemptsQuery)
             ->select(DB::raw('FLOOR(score_percentage / 10) * 10 as bucket'), DB::raw('COUNT(*) as count'))
             ->groupBy('bucket')
             ->orderBy('bucket')
@@ -128,7 +133,7 @@ class ResultController extends Controller
         }
 
         // Test Performance
-        $testPerformance = (clone $attemptsQuery)
+        $testPerformance = (clone $scoredAttemptsQuery)
             ->select(
                 'test_id',
                 DB::raw('AVG(score_percentage) as avg_score'),

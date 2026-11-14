@@ -48,7 +48,7 @@
                     @php $attemptsByTest = $participant->attempts->keyBy('test_id'); @endphp
                     @foreach($tests as $test)
                         @php $attempt = $attemptsByTest->get($test->id); @endphp
-                        <td>{{ $attempt?->score_percentage ?? '—' }}</td>
+                        <td>{{ $attempt?->topCategoryCode() ?? $attempt?->score_percentage ?? '—' }}</td>
                     @endforeach
                 </tr>
             @endforeach

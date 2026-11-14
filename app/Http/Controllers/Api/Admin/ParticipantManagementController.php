@@ -51,7 +51,7 @@ class ParticipantManagementController extends Controller
                     return [
                         'test_title' => $test->getTranslation('title'),
                         'status' => $attempt ? $attempt->status : 'not_started',
-                        'score_percentage' => $attempt?->score_percentage,
+                        'score_percentage' => $test->reportsTopCategories() ? null : $attempt?->score_percentage,
                     ];
                 });
 
@@ -121,13 +121,15 @@ class ParticipantManagementController extends Controller
             // Current round test statuses
             $testsStatus = $assessment->tests->map(function ($test) use ($currentAttempts) {
                 $attempt = $currentAttempts->firstWhere('test_id', $test->id);
+                // Top-category results (e.g. Holland) have no single score to show.
+                $scored = $attempt && ! $test->reportsTopCategories();
                 return [
                     'attempt_id' => $attempt?->uuid,
                     'test_title' => $test->getTranslation('title'),
                     'status' => $attempt ? $attempt->status : 'not_started',
-                    'score_percentage' => $attempt?->score_percentage,
-                    'score_raw' => $attempt?->score_raw,
-                    'score_max' => $attempt?->score_max,
+                    'score_percentage' => $scored ? $attempt->score_percentage : null,
+                    'score_raw' => $scored ? $attempt->score_raw : null,
+                    'score_max' => $scored ? $attempt->score_max : null,
                     'time_spent_seconds' => $attempt?->time_spent_seconds,
                     'completed_at' => $attempt?->completed_at?->toISOString(),
                 ];
@@ -155,7 +157,7 @@ class ParticipantManagementController extends Controller
                 'has_pending_retake' => $latestGrant && !$allCompleted,
                 'previous_attempts' => $previousAttempts->map(fn ($a) => [
                     'test_title' => $a->test?->getTranslation('title'),
-                    'score_percentage' => $a->score_percentage,
+                    'score_percentage' => $a->test?->reportsTopCategories() ? null : $a->score_percentage,
                     'completed_at' => $a->completed_at?->toISOString(),
                 ])->values(),
             ];

@@ -116,9 +116,10 @@ class CsvExportService
 
             foreach ($tests as $test) {
                 $attempt = $attemptsByTest->get($test->id);
-                $row[] = $attempt?->score_percentage !== null
-                    ? number_format($attempt->score_percentage, 1) . '%'
-                    : '';
+                $row[] = $attempt?->topCategoryCode()
+                    ?? ($attempt?->score_percentage !== null
+                        ? number_format($attempt->score_percentage, 1) . '%'
+                        : '');
             }
 
             fputcsv($handle, $row);

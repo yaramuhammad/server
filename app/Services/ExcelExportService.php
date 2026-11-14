@@ -83,6 +83,19 @@ class ExcelExportService
         $columns = [];
         foreach ($tests as $test) {
             $testTitle = $test->getTranslation('title');
+
+            // Reported as its top categories (e.g. a Holland code), so one column.
+            if ($test->reportsTopCategories()) {
+                $columns[] = [
+                    'test' => $test,
+                    'test_title' => $testTitle,
+                    'type' => 'top_categories',
+                    'category_key' => null,
+                    'label' => $testTitle,
+                ];
+                continue;
+            }
+
             $categories = $this->getTestCategories($test);
 
             if (!empty($categories)) {
@@ -309,6 +322,9 @@ class ExcelExportService
     {
         if (!$attempt) {
             return null;
+        }
+        if ($colDef['type'] === 'top_categories') {
+            return $attempt->topCategoryCode();
         }
         if ($colDef['type'] === 'overall') {
             return $attempt->score_percentage !== null

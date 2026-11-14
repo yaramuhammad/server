@@ -9,6 +9,7 @@ use App\Models\Question;
 use App\Models\Response;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use Database\Seeders\StudentAbilities\HollandVocationalScale;
 use Illuminate\Database\Seeder;
 
 /**
@@ -33,7 +34,7 @@ class StudentAbilitiesResponsesSeeder extends Seeder
     private const EMAIL_DOMAIN = '@students.demo';
 
     /** Test keys in assessment order (matches StudentAbilitiesSeeder). */
-    private const TEST_KEYS = ['cognitive', 'dat', 'math', 'natural', 'social', 'arabic', 'english', 'cultural'];
+    private const TEST_KEYS = ['cognitive', 'dat', 'math', 'natural', 'social', 'arabic', 'english', 'cultural', 'holland'];
 
     public function run(): void
     {
@@ -119,9 +120,11 @@ class StudentAbilitiesResponsesSeeder extends Seeder
                     'completed_at' => $completedAt,
                 ]);
 
-                $values = $testKey === 'cultural'
-                    ? $this->likertAnswers($questions, $student)
-                    : $this->mcqAnswers($questions, $testKey, $student);
+                $values = match ($testKey) {
+                    'cultural' => $this->likertAnswers($questions, $student),
+                    'holland' => $this->hollandAnswers($questions, $i),
+                    default => $this->mcqAnswers($questions, $testKey, $student),
+                };
 
                 $step = max(1, intdiv($duration * 60, max(1, $questions->count())));
                 foreach ($questions as $qi => $q) {
@@ -141,7 +144,7 @@ class StudentAbilitiesResponsesSeeder extends Seeder
 
         $this->command->info('');
         $this->command->info('=== Demo students seeded ===');
-        $this->command->info(count($this->students()) . ' students completed all 8 tests on link #' . $link->id . ' (password: password123).');
+        $this->command->info(count($this->students()) . ' students completed all ' . count($tests) . ' tests on link #' . $link->id . ' (password: password123).');
         $this->command->info('Assessment results:  /admin/assessments/' . $assessment->uuid . '/results');
     }
 
@@ -216,6 +219,23 @@ class StudentAbilitiesResponsesSeeder extends Seeder
 
             return max(1, min(5, $value));
         })->all();
+    }
+
+    /**
+     * Holland answers (1 = strongest preference): each student leans towards three types,
+     * rotating with their position so the demo students get different top-3 results.
+     *
+     * @param  \Illuminate\Support\Collection<int, Question>  $questions
+     * @return list<int>
+     */
+    private function hollandAnswers($questions, int $studentIndex): array
+    {
+        $types = HollandVocationalScale::TYPES;
+        $preferred = array_map(fn ($k) => $types[($studentIndex + $k) % 6], [0, 2, 3]);
+
+        return $questions->map(fn (Question $q) => in_array($q->category_key, $preferred, true)
+            ? (mt_rand(1, 10) <= 7 ? 1 : 2)
+            : mt_rand(1, 3))->all();
     }
 
     // ------------------------------------------------------------------

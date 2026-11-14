@@ -10,9 +10,10 @@ namespace Database\Seeders\StudentAbilities;
  * The Arabic source lists items 15 and 16 in swapped order; here both follow the English order
  * (both items belong to subscale 4, so scoring is unaffected).
  *
- * Scoring (from the source): total = sum of 16 items (16-80) →
- *   68-80 High readiness · 52-67 Moderate readiness · below 52 Low readiness.
- * Subscales (4-20 each) use the same cutoffs scaled to percent of max (85% / 65%).
+ * Scoring: subscales (4-20 each) and the total (16-80) are rated on percent of max, like the
+ * battery's other tests, at the client's request: below 50% Low readiness · 50% Moderate
+ * readiness · 75% High readiness. (The source rates only the total, at 52 / 68 of 80; its
+ * three recommendations are kept as the overall descriptions.)
  */
 class CrossCulturalReadinessBattery
 {
@@ -52,32 +53,32 @@ class CrossCulturalReadinessBattery
                 '4' => ['en' => 'Often applies to me', 'ar' => 'تنطبق عليّ غالبًا'],
                 '5' => ['en' => 'Fully applies to me', 'ar' => 'تنطبق عليّ تمامًا'],
             ],
-            // Subscale bands: the source's 68/80 and 52/80 cutoffs expressed as percent of max.
+            // Subscale bands, on percent of max.
             'interpretation' => [
-                ['min' => 0, 'max' => 64.99, 'label' => $low],
-                ['min' => 65, 'max' => 84.99, 'label' => $moderate],
-                ['min' => 85, 'max' => 100, 'label' => $high],
+                ['min' => 0, 'max' => 49.99, 'label' => $low],
+                ['min' => 50, 'max' => 74.99, 'label' => $moderate],
+                ['min' => 75, 'max' => 100, 'label' => $high],
             ],
-            // Overall readiness index on the raw total (16-80), exactly as in the source.
+            // Overall readiness on percent of max, with the source's recommendations.
             'overall' => [
-                'use_percentage' => false,
+                'use_percentage' => true,
                 'ranges' => [
                     [
-                        'min' => 0, 'max' => 51, 'label' => $low,
+                        'min' => 0, 'max' => 49.99, 'label' => $low,
                         'description' => [
                             'en' => 'Development needed: the student may experience significant distress, severe culture shock, or academic decline due to underdeveloped autonomy. A local foundation year or a dual-degree domestic pathway is recommended before travel, with training in adaptation skills.',
                             'ar' => 'يحتاج إلى تطوير: قد يتعرض الطالب لضغوط شديدة أو صدمة ثقافية حادة أو تراجع أكاديمي بسبب ضعف الاستقلالية. يوصى بتأجيل الاغتراب المباشر أو الالتحاق ببرنامج جامعي مدمج (سنة داخل الوطن ثم السفر) مع التدريب على مهارات التكيف.',
                         ],
                     ],
                     [
-                        'min' => 52, 'max' => 67, 'label' => $moderate,
+                        'min' => 50, 'max' => 74.99, 'label' => $moderate,
                         'description' => [
                             'en' => 'Conditional readiness: the student shows adequate foundational skills but would benefit from a targeted Pre-Departure Orientation (PDO) focusing on practical self-reliance, cultural intelligence and culture-shock management.',
                             'ar' => 'جاهزية مشروطة: يمتلك الطالب مهارات أساسية كافية، لكنه يحتاج إلى برامج توجيهية سابقة للسفر (Pre-departure Orientation) تركز على مهارات إدارة الذات والذكاء الثقافي والتعامل مع الصدمة الثقافية.',
                         ],
                     ],
                     [
-                        'min' => 68, 'max' => 80, 'label' => $high,
+                        'min' => 75, 'max' => 100, 'label' => $high,
                         'description' => [
                             'en' => 'Optimal readiness: the student has strong autonomy, psychological resilience and cultural flexibility, and is well prepared for immediate international academic placement.',
                             'ar' => 'جاهزية مثلى: يمتلك الطالب مرونة واستقلالية عالية، ومؤهل تمامًا للدراسة في الخارج مع تكيف سريع ومستقل.',

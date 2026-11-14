@@ -15,6 +15,8 @@ class ScoringEngine
     {
         $test = $attempt->test;
         $responses = $attempt->responses()->with('question')->get();
+        // Questions read their test's scale; share the loaded test instead of querying it per question.
+        $responses->each(fn ($r) => $r->question?->setRelation('test', $test));
         $scoringType = $test->scoring_type ?? 'simple';
         $scoringConfig = $test->scoring_config ?? [];
 
@@ -31,14 +33,12 @@ class ScoringEngine
      */
     private function calculateSimple($test, Collection $responses): array
     {
-        $scaleConfig = $test->scale_config ?? [];
-        $requiredCount = $test->questions()->where('is_required', true)->count();
-        $scaleMax = $scaleConfig['max'] ?? 5;
+        $requiredQuestions = $test->questions()->where('is_required', true)->get()
+            ->each(fn ($question) => $question->setRelation('test', $test));
+        $requiredCount = $requiredQuestions->count();
 
         $scoreRaw = $responses->sum('scored_value');
-        $hasCorrectAnswer = $responses->first()?->question->correct_answer !== null;
-        $effectiveMax = $hasCorrectAnswer ? 1 : $scaleMax;
-        $scoreMax = $requiredCount * $effectiveMax;
+        $scoreMax = $requiredQuestions->sum(fn ($question) => $question->maxScoredValue());
         $scorePercentage = $scoreMax > 0 ? round(($scoreRaw / $scoreMax) * 100, 2) : 0;
         $scoreAverage = $responses->count() > 0 ? round($responses->avg('scored_value'), 2) : 0;
 
@@ -66,9 +66,6 @@ class ScoringEngine
     private function calculateCategory($test, Collection $responses, array $config): array
     {
         $categoryDefs = collect($config['categories'] ?? []);
-        $scaleConfig = $test->scale_config ?? [];
-        $scaleMax = $scaleConfig['max'] ?? 5;
-        $scaleMin = $scaleConfig['min'] ?? 1;
 
         // Group responses by their question's category_key
         $grouped = $responses->groupBy(fn ($r) => $r->question->category_key ?? '_uncategorized');
@@ -83,11 +80,7 @@ class ScoringEngine
             $questionCount = $catResponses->count();
 
             $raw = $catResponses->sum('scored_value');
-
-            // If questions use correct_answer scoring, max per question is 1
-            $hasCorrectAnswer = $catResponses->first()?->question->correct_answer !== null;
-            $effectiveMax = $hasCorrectAnswer ? 1 : $scaleMax;
-            $max = $questionCount * $effectiveMax;
+            $max = $catResponses->sum(fn ($r) => $r->question->maxScoredValue());
             $percentage = $max > 0 ? round(($raw / $max) * 100, 2) : 0;
             $average = $questionCount > 0 ? round($catResponses->avg('scored_value'), 2) : 0;
 
@@ -121,6 +114,22 @@ class ScoringEngine
             'type' => 'category',
             'categories' => $categories,
         ];
+
+        // Report the N highest-scoring categories (e.g. Holland types) with their
+        // descriptions. usort is stable, so ties keep the configured category order.
+        if (! empty($config['top_categories'])) {
+            $ranked = $categories;
+            usort($ranked, fn ($a, $b) => $b['score_raw'] <=> $a['score_raw']);
+            $descriptions = $categoryDefs->pluck('description', 'key');
+
+            $details['top_categories'] = array_map(fn ($cat) => [
+                'key' => $cat['key'],
+                'label' => $cat['label'],
+                'description' => $descriptions[$cat['key']] ?? null,
+                'score_raw' => $cat['score_raw'],
+                'score_max' => $cat['score_max'],
+            ], array_slice($ranked, 0, (int) $config['top_categories']));
+        }
 
         // Optional overall interpretation of the total, using the same
         // `ranges` / `use_percentage` keys as range scoring.
