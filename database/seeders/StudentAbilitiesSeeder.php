@@ -12,6 +12,7 @@ use Database\Seeders\StudentAbilities\CrossCulturalReadinessBattery;
 use Database\Seeders\StudentAbilities\DifferentialAptitudeTests;
 use Database\Seeders\StudentAbilities\EnglishLanguageAchievementTest;
 use Database\Seeders\StudentAbilities\GeneralCognitiveBattery;
+use Database\Seeders\StudentAbilities\HollandVocationalScale;
 use Database\Seeders\StudentAbilities\MathematicsAchievementTest;
 use Database\Seeders\StudentAbilities\NaturalSciencesAchievementTest;
 use Database\Seeders\StudentAbilities\SocialSciencesAchievementTest;
@@ -24,17 +25,19 @@ use RuntimeException;
 /**
  * "قدرات و اتجاهات الطلاب" — Student Abilities & Attitudes.
  *
- * Seeds eight tests (content lives in database/seeders/StudentAbilities/, in source-PDF order):
+ * Seeds nine tests (content lives in database/seeders/StudentAbilities/, in source-PDF order):
  *   - 7 multiple-choice ability / achievement tests: 1 point per correct answer, `category`
  *     scoring per section with Low / Moderate / High bands, plus an overall band on the total.
  *   - 1 Likert self-report battery (Cross-Cultural Readiness): `category` scoring per subscale
- *     plus the source's overall readiness index on the raw total.
+ *     with the same bands, plus an overall readiness band on the total.
+ *   - The Holland Vocational Factors Scale: `category` scoring per Holland type, reported as the
+ *     three highest types.
  *
  * Multiple-choice options are reordered so correct answers spread evenly over A-D (the source
  * keys are heavily position-biased). The shuffle is seeded per test, so every run produces the
  * same order. Content and keys in the data files stay in PDF order for auditing.
  *
- * Then bundles the eight tests into one assessment with a public link that stays open for two
+ * Then bundles the nine tests into one assessment with a public link that stays open for two
  * months and has no participant cap.
  */
 class StudentAbilitiesSeeder extends Seeder
@@ -42,6 +45,21 @@ class StudentAbilitiesSeeder extends Seeder
     public const TITLE_AR = 'قدرات و اتجاهات الطلاب';
 
     public const TITLE_EN = 'Student Abilities & Attitudes';
+
+    public const DESCRIPTION = [
+        'en' => 'A comprehensive student battery: general cognitive ability, differential aptitudes (DAT), achievement in mathematics, natural sciences, social sciences, Arabic and English, cross-cultural readiness for studying abroad, and vocational interests (Holland).',
+        'ar' => 'بطارية شاملة للطلاب تقيس القدرات المعرفية العامة، والقدرات الفارقة (DAT)، والتحصيل في الرياضيات والعلوم الطبيعية والعلوم الاجتماعية واللغتين العربية والإنجليزية، والجاهزية للتكيف الثقافي والدراسة في الخارج، والميول المهنية (هولاند).',
+    ];
+
+    public const INSTRUCTIONS = [
+        'en' => 'This assessment contains nine tests. Seven are multiple-choice tests with one correct answer per question; the last two are self-report scales with no right or wrong answers. The Arabic test is in Arabic and the English test is in English. Work carefully and answer every question.',
+        'ar' => 'يتضمن هذا التقييم تسعة اختبارات: سبعة اختبارات اختيار من متعدد لكل سؤال فيها إجابة صحيحة واحدة، والاختباران الأخيران مقياسا تقرير ذاتي لا توجد فيهما إجابات صحيحة أو خاطئة. اختبار اللغة العربية باللغة العربية واختبار اللغة الإنجليزية باللغة الإنجليزية. اعمل بتركيز وأجب عن جميع الأسئلة.',
+    ];
+
+    public const WELCOME_MESSAGE = [
+        'en' => 'Welcome. This assessment includes nine tests about your abilities, academic achievement, readiness to study abroad and vocational interests. It is long (about three hours in total) and each test is submitted separately. Please answer carefully and honestly.',
+        'ar' => 'مرحبًا بك. يتضمن هذا التقييم تسعة اختبارات حول قدراتك وتحصيلك الدراسي وجاهزيتك للدراسة في الخارج وميولك المهنية. التقييم طويل (نحو ثلاث ساعات إجمالًا)، ويُسلَّم كل اختبار على حدة. يرجى الإجابة بتركيز وصدق.',
+    ];
 
     /** Shared 3-band interpretation for the multiple-choice tests (percent correct). */
     private array $mcqBands;
@@ -109,6 +127,7 @@ class StudentAbilitiesSeeder extends Seeder
                 $this->mcqTest($admin, ArabicLanguageAchievementTest::definition(), 'arabic'),
                 $this->mcqTest($admin, EnglishLanguageAchievementTest::definition(), 'english'),
                 $this->likertTest($admin, CrossCulturalReadinessBattery::definition()),
+                HollandVocationalScale::create($admin->id),
             ];
 
             $this->buildAssessment($admin, $tests);
@@ -275,14 +294,8 @@ class StudentAbilitiesSeeder extends Seeder
                 'en' => self::TITLE_EN,
                 'ar' => self::TITLE_AR,
             ],
-            'description' => [
-                'en' => "A comprehensive student battery: general cognitive ability, differential aptitudes (DAT), achievement in mathematics, natural sciences, social sciences, Arabic and English, and cross-cultural readiness for studying abroad.",
-                'ar' => 'بطارية شاملة للطلاب تقيس القدرات المعرفية العامة، والقدرات الفارقة (DAT)، والتحصيل في الرياضيات والعلوم الطبيعية والعلوم الاجتماعية واللغتين العربية والإنجليزية، والجاهزية للتكيف الثقافي والدراسة في الخارج.',
-            ],
-            'instructions' => [
-                'en' => 'This assessment contains eight tests. Seven are multiple-choice tests with one correct answer per question; the last is a self-report scale with no right or wrong answers. The Arabic test is in Arabic and the English test is in English. Work carefully and answer every question.',
-                'ar' => 'يتضمن هذا التقييم ثمانية اختبارات: سبعة اختبارات اختيار من متعدد لكل سؤال فيها إجابة صحيحة واحدة، والأخير مقياس تقرير ذاتي لا توجد فيه إجابات صحيحة أو خاطئة. اختبار اللغة العربية باللغة العربية واختبار اللغة الإنجليزية باللغة الإنجليزية. اعمل بتركيز وأجب عن جميع الأسئلة.',
-            ],
+            'description' => self::DESCRIPTION,
+            'instructions' => self::INSTRUCTIONS,
             'status' => 'published',
             'show_results_to_participant' => true,
         ]);
@@ -309,10 +322,7 @@ class StudentAbilitiesSeeder extends Seeder
             'collect_study_preferences' => true,
             'allow_profile_view' => true,
             'allow_profile_download' => true,
-            'welcome_message' => [
-                'en' => 'Welcome. This assessment includes eight tests about your abilities, academic achievement and readiness to study abroad. It is long (about two and a half hours in total) and each test is submitted separately. Please answer carefully and honestly.',
-                'ar' => 'مرحبًا بك. يتضمن هذا التقييم ثمانية اختبارات حول قدراتك وتحصيلك الدراسي وجاهزيتك للدراسة في الخارج. التقييم طويل (نحو ساعتين ونصف إجمالًا)، ويُسلَّم كل اختبار على حدة. يرجى الإجابة بتركيز وصدق.',
-            ],
+            'welcome_message' => self::WELCOME_MESSAGE,
             'completion_message' => [
                 'en' => 'Thank you for completing the Student Abilities & Attitudes assessment.',
                 'ar' => 'شكرًا لإكمالك تقييم قدرات و اتجاهات الطلاب.',

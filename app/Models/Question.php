@@ -61,6 +61,25 @@ class Question extends Model
         return $this->test->scale_config ?? ['min' => 1, 'max' => 5];
     }
 
+    /**
+     * The most points one answer to this question can earn: 1 for a keyed
+     * question, the top of its score_map when answers map to points, otherwise
+     * the top of the test's scale.
+     */
+    public function maxScoredValue(): int
+    {
+        if ($this->correct_answer !== null) {
+            return 1;
+        }
+
+        $scoreMap = $this->getEffectiveScaleConfig()['score_map'] ?? null;
+        if (! empty($scoreMap)) {
+            return max(array_map('intval', $scoreMap));
+        }
+
+        return (int) ($this->test->scale_config['max'] ?? 5);
+    }
+
     public function calculateScoredValue(int $rawValue): int
     {
         // If correct_answer is set, score as 1 (correct) or 0 (incorrect)

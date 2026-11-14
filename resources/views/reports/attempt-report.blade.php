@@ -24,14 +24,21 @@
 
     <div class="section-title">Score Summary</div>
     <div class="stat-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ $attempt->score_percentage }}%</div>
-            <div class="stat-label">Score Percentage</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $attempt->score_raw }} / {{ $attempt->score_max }}</div>
-            <div class="stat-label">Raw Score</div>
-        </div>
+        @if($attempt->topCategoryCode())
+            <div class="stat-card">
+                <div class="stat-value">{{ $attempt->topCategoryCode() }}</div>
+                <div class="stat-label">Top Types</div>
+            </div>
+        @else
+            <div class="stat-card">
+                <div class="stat-value">{{ $attempt->score_percentage }}%</div>
+                <div class="stat-label">Score Percentage</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ $attempt->score_raw }} / {{ $attempt->score_max }}</div>
+                <div class="stat-label">Raw Score</div>
+            </div>
+        @endif
         <div class="stat-card">
             <div class="stat-value">{{ gmdate('H:i:s', $attempt->time_spent_seconds ?? 0) }}</div>
             <div class="stat-label">Time Spent</div>

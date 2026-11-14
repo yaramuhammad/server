@@ -97,6 +97,17 @@ class TestAttempt extends Model
         return $this->status === 'completed';
     }
 
+    /**
+     * For tests reported as their top categories, the ranked category keys joined
+     * (a Holland code such as "IAS"); null for every other test.
+     */
+    public function topCategoryCode(): ?string
+    {
+        $top = $this->score_details['top_categories'] ?? null;
+
+        return $top ? implode('', array_column($top, 'key')) : null;
+    }
+
     public function isTimedOut(): bool
     {
         $test = $this->test;

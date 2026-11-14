@@ -18,7 +18,7 @@
         <div class="section-title">{{ $participant->name ?? 'Anonymous' }} ({{ $participant->email ?? '—' }})</div>
 
         @foreach($participant->attempts as $attempt)
-            <p style="margin: 8px 0 4px;"><strong>{{ $attempt->test->getTranslation('title') }}</strong> — Score: {{ $attempt->score_percentage }}%</p>
+            <p style="margin: 8px 0 4px;"><strong>{{ $attempt->test->getTranslation('title') }}</strong> — {{ $attempt->topCategoryCode() ? 'Top types: ' . $attempt->topCategoryCode() : 'Score: ' . $attempt->score_percentage . '%' }}</p>
             <table>
                 <thead>
                     <tr>

@@ -67,9 +67,12 @@
             <p style="color: #888; font-style: italic;">{{ $s($isAr ? 'لا توجد اختبارات مكتملة.' : 'No completed tests.') }}</p>
         @endif
 
-        {{-- Score overview line chart (when 2+ tests completed) --}}
-        @if(count($entry['attempts']) >= 2)
-            @include('reports.partials.score-line-chart', ['attempts' => collect($entry['attempts']), 'locale' => $lang])
+        {{-- Score overview line chart (when 2+ scored tests completed; top-category results have no single score) --}}
+        @php
+            $chartAttempts = collect($entry['attempts'])->filter(fn ($a) => empty($a->score_details['top_categories']));
+        @endphp
+        @if($chartAttempts->count() >= 2)
+            @include('reports.partials.score-line-chart', ['attempts' => $chartAttempts, 'locale' => $lang])
             <div class="page-break"></div>
         @endif
 
@@ -86,6 +89,10 @@
                 $details = $attempt->score_details;
                 $scoringType = $details['type'] ?? 'simple';
             @endphp
+
+            @if(!empty($details['top_categories']))
+                @include('reports.partials.top-categories', ['topCategories' => $details['top_categories'], 'lang' => $lang, 'isAr' => $isAr, 's' => $s])
+            @else
 
             <div class="stat-grid">
                 <div class="stat-card">
@@ -220,6 +227,8 @@
                         {{ $s($isAr ? 'المدى' : 'Range') }}: {{ $details['matched_range']['min'] }} - {{ $details['matched_range']['max'] }}
                     </div>
                 </div>
+
+            @endif
 
             @endif
         @endforeach

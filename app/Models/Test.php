@@ -94,6 +94,15 @@ class Test extends Model
         return $this->status === 'published';
     }
 
+    /**
+     * Whether results are reported as the top-ranked categories (e.g. Holland
+     * types) instead of a percentage score.
+     */
+    public function reportsTopCategories(): bool
+    {
+        return $this->scoring_type === 'category' && ! empty($this->scoring_config['top_categories']);
+    }
+
     public function getMaxPossibleScore(): float
     {
         $scaleMax = $this->scale_config['max'] ?? 5;

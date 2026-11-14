@@ -109,7 +109,8 @@ class ParticipantPortalController extends Controller
                     'test_id' => $test->uuid,
                     'test_title' => $test->getTranslation('title'),
                     'status' => $attempt ? $attempt->status : 'not_started',
-                    'score_percentage' => $canView ? $attempt?->score_percentage : null,
+                    // Top-category results (e.g. Holland) have no single score to show.
+                    'score_percentage' => $canView && ! $test->reportsTopCategories() ? $attempt?->score_percentage : null,
                 ];
             });
 
